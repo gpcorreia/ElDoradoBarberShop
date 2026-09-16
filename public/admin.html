@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Painel administrativo | ElDorado Barbershop</title>
+    <link rel="icon" type="image/webp" href="/img/logo.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@500;600&family=Material+Symbols+Outlined:wght@300&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/tailwind.generated.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+    <script type="module" src="/js/admin.js"></script>
+  </head>
+  <body class="min-h-screen bg-surface font-body text-cream antialiased">
+    <header class="border-b border-line bg-ink">
+      <div class="mx-auto flex max-w-[1280px] items-center justify-between px-5 py-5 sm:px-6">
+        <div class="flex items-center gap-3"><a href="/" class="flex" aria-label="ElDorado Barbershop — início"><img src="/img/logo.webp" alt="ElDorado Barbershop" class="h-12 w-12 object-contain drop-shadow-[0_3px_8px_rgba(233,193,118,0.2)]" /></a><div><p class="font-display text-base tracking-[0.14em] text-gold sm:text-lg">ELDORADO</p><p class="mt-1 text-[7px] tracking-[0.18em] text-muted">ADMINISTRAÇÃO</p></div></div>
+        <button id="logout" class="flex items-center gap-2 border border-line px-4 py-3 text-[9px] font-semibold tracking-[0.14em] text-muted transition hover:border-gold hover:text-gold"><span class="material-symbols-outlined text-base">logout</span>SAIR</button>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 sm:py-12">
+      <div class="mb-8"><p class="text-[9px] font-semibold tracking-[0.24em] text-gold">PAINEL DE GESTÃO</p><h1 class="mt-3 font-display text-3xl sm:text-5xl">O controlo da casa</h1><p class="mt-3 max-w-2xl text-xs leading-5 text-muted sm:text-sm">Gere a equipa, liberta horários cancelados e apresenta os produtos disponíveis.</p></div>
+
+      <nav class="mb-7 grid grid-cols-3 border border-line bg-ink p-1" aria-label="Secções administrativas">
+        <button data-tab="bookings" class="admin-tab is-active px-2 py-3 text-[8px] font-bold tracking-[0.08em] sm:text-[10px] sm:tracking-[0.15em]">RESERVAS</button>
+        <button data-tab="barbers" class="admin-tab px-2 py-3 text-[8px] font-bold tracking-[0.08em] text-muted sm:text-[10px] sm:tracking-[0.15em]">BARBEIROS</button>
+        <button data-tab="products" class="admin-tab px-2 py-3 text-[8px] font-bold tracking-[0.08em] text-muted sm:text-[10px] sm:tracking-[0.15em]">PRODUTOS</button>
+      </nav>
+
+      <section data-panel="bookings" class="admin-panel border border-line bg-[#171616] p-5 sm:p-8">
+        <header class="mb-7"><p class="text-[9px] tracking-[0.2em] text-gold">AGENDA</p><h2 class="mt-2 font-display text-2xl sm:text-3xl">Reservas por barbeiro</h2><p class="mt-2 text-xs text-muted">Escolhe um barbeiro para consultar as reservas. As reservas futuras podem ser canceladas.</p></header>
+        <label class="block max-w-md"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">BARBEIRO</span><select id="booking-barber" class="admin-field w-full px-4 py-3 text-sm"><option value="">Seleciona um barbeiro</option></select></label>
+        <div id="bookings-list" class="mt-7"><p class="border border-dashed border-line p-6 text-center text-xs text-muted">Seleciona um barbeiro para veres a agenda.</p></div>
+      </section>
+
+      <section data-panel="barbers" class="admin-panel border border-line bg-[#171616] p-5 sm:p-8" hidden>
+        <div class="grid gap-8 lg:grid-cols-[1fr_360px]">
+          <form id="barber-form" class="space-y-5">
+            <header class="mb-7"><p class="text-[9px] tracking-[0.2em] text-gold">EQUIPA</p><h2 class="mt-2 font-display text-2xl sm:text-3xl">Adicionar barbeiro</h2></header>
+            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">NOME</span><input name="name" maxlength="100" class="admin-field w-full px-4 py-3 text-sm" required /></label>
+            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">FOTOGRAFIA</span><input data-image-input data-preview="barber-preview" name="image" type="file" accept="image/jpeg,image/png,image/webp" class="admin-field w-full text-xs" required /><small class="mt-2 block text-[9px] text-muted">JPG, PNG ou WebP · máximo 5 MB.</small></label>
+            <button class="bg-gold px-7 py-4 text-[10px] font-bold tracking-[0.17em] text-ink disabled:opacity-50" type="submit">CRIAR BARBEIRO</button>
+          </form>
+          <div class="border border-line bg-ink p-4"><p class="mb-3 text-[9px] tracking-[0.16em] text-muted">PRÉ-VISUALIZAÇÃO</p><div class="aspect-[4/5] overflow-hidden bg-panel"><img id="barber-preview" class="hidden h-full w-full object-cover" alt="Pré-visualização do barbeiro" /><div data-placeholder="barber-preview" class="flex h-full items-center justify-center text-muted"><span class="material-symbols-outlined text-5xl">person</span></div></div></div>
+        </div>
+      </section>
+
+      <section data-panel="products" class="admin-panel border border-line bg-[#171616] p-5 sm:p-8" hidden>
+        <div class="grid gap-8 lg:grid-cols-[1fr_360px]">
+          <form id="product-form" class="space-y-5">
+            <header class="mb-7"><p class="text-[9px] tracking-[0.2em] text-gold">CATÁLOGO</p><h2 class="mt-2 font-display text-2xl sm:text-3xl">Adicionar produto</h2></header>
+            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">NOME</span><input name="name" maxlength="100" class="admin-field w-full px-4 py-3 text-sm" required /></label>
+            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">CATEGORIA</span><select name="category" class="admin-field w-full px-4 py-3 text-sm" required><option value="">Seleciona uma categoria</option><option value="Styling">Styling</option><option value="Barba">Barba</option><option value="Cabelo">Cabelo</option><option value="Rosto">Rosto</option></select></label>
+            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">DESCRIÇÃO</span><textarea name="description" rows="4" maxlength="1000" class="admin-field w-full resize-y px-4 py-3 text-sm" required></textarea></label>
+            <label class="block max-w-xs"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">PREÇO (€)</span><input name="price" type="number" min="0" max="999999.99" step="0.01" class="admin-field w-full px-4 py-3 text-sm" required /></label>
+            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">IMAGEM</span><input data-image-input data-preview="product-preview" name="image" type="file" accept="image/jpeg,image/png,image/webp" class="admin-field w-full text-xs" required /><small class="mt-2 block text-[9px] text-muted">JPG, PNG ou WebP · máximo 5 MB.</small></label>
+            <button class="bg-gold px-7 py-4 text-[10px] font-bold tracking-[0.17em] text-ink disabled:opacity-50" type="submit">PUBLICAR PRODUTO</button>
+          </form>
+          <div class="border border-line bg-ink p-4"><p class="mb-3 text-[9px] tracking-[0.16em] text-muted">PRÉ-VISUALIZAÇÃO</p><div class="aspect-square overflow-hidden bg-panel"><img id="product-preview" class="hidden h-full w-full object-cover" alt="Pré-visualização do produto" /><div data-placeholder="product-preview" class="flex h-full items-center justify-center text-muted"><span class="material-symbols-outlined text-5xl">inventory_2</span></div></div></div>
+        </div>
+        <div class="mt-10 border-t border-line pt-8">
+          <header class="mb-5"><p class="text-[9px] tracking-[0.2em] text-gold">PUBLICADOS</p><h3 class="mt-2 font-display text-2xl">Produtos na loja</h3><p class="mt-2 text-xs text-muted">Remove os produtos esgotados ou descontinuados da montra pública.</p></header>
+          <div id="admin-products-list" class="space-y-3" aria-live="polite"><p class="border border-dashed border-line p-6 text-center text-xs text-muted">A carregar produtos…</p></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="admin-message" class="admin-message fixed inset-x-4 bottom-4 z-50 mx-auto max-w-lg border border-line bg-panel p-4 shadow-2xl" role="status"><p id="admin-message-title" class="font-display text-lg"></p><p id="admin-message-text" class="mt-1 text-xs text-muted"></p></div>
+
+    <dialog id="booking-detail-dialog" class="booking-detail-dialog m-auto w-[calc(100%-2rem)] max-w-lg border border-line bg-panel p-0 text-cream">
+      <div id="booking-detail"></div>
+    </dialog>
+  </body>
+</html>

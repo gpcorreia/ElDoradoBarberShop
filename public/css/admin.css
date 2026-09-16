@@ -1,0 +1,68 @@
+.admin-field {
+  background: #0d0d0d;
+  border: 1px solid #4e4639;
+  color: #e5e2e1;
+  outline: none;
+  transition: border-color 180ms ease;
+}
+
+.admin-field:focus { border-color: #e9c176; }
+.admin-field::file-selector-button {
+  background: #201f1f;
+  border: 0;
+  color: #e9c176;
+  cursor: pointer;
+  margin-right: 14px;
+  padding: 12px 14px;
+}
+
+.admin-tab.is-active { background: #e9c176; color: #0a0a0a; }
+.admin-panel[hidden] { display: none; }
+
+.admin-message {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: 180ms ease;
+}
+
+.admin-message.is-visible { opacity: 1; pointer-events: auto; transform: none; }
+
+.calendar-week-grid {
+  display: grid;
+  grid-template-columns: 68px repeat(6, minmax(135px, 1fr));
+}
+
+.calendar-day {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 74px,
+    rgba(78, 70, 57, 0.65) 74px,
+    rgba(78, 70, 57, 0.65) 75px
+  );
+}
+
+.calendar-booking {
+  transition: filter 160ms ease, transform 160ms ease;
+  z-index: 5;
+}
+
+.calendar-booking:hover,
+.calendar-booking:focus-visible {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  z-index: 10;
+}
+
+.calendar-scroll { scrollbar-color: #4e4639 #111; scrollbar-width: thin; }
+
+.booking-detail-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(4px);
+}
+
+@media (max-width: 639px) {
+  .admin-table-row { grid-template-columns: 1fr auto; }
+  .admin-table-row .booking-contact { grid-column: 1 / -1; }
+}

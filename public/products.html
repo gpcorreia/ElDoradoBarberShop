@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Descobre os produtos selecionados pela ElDorado Barbershop." />
+    <title>Os nossos produtos | ElDorado Barbershop</title>
+    <link rel="icon" type="image/webp" href="/img/logo.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@500;600&family=Material+Symbols+Outlined:wght@300&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/tailwind.generated.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/products.css" />
+    <script src="/js/layout.js" defer></script>
+    <script src="/js/main.js" defer></script>
+    <script type="module" src="/js/products.js"></script>
+  </head>
+  <body class="overflow-x-hidden bg-surface font-body text-cream antialiased">
+    <div data-navbar-slot></div>
+
+    <main class="pt-20">
+      <section class="product-hero border-b border-line py-20 sm:py-28">
+        <div class="mx-auto max-w-[1280px] px-5 sm:px-6"><p class="text-[9px] font-semibold tracking-[0.28em] text-gold">SELEÇÃO ELDORADO</p><h1 class="mt-4 max-w-3xl font-display text-4xl font-semibold sm:text-6xl">Os produtos por detrás de um bom estilo.</h1><p class="mt-5 max-w-xl text-sm leading-6 text-muted">Escolhidos pelos nossos barbeiros. Consulta os detalhes e fala connosco diretamente pelo WhatsApp.</p></div>
+      </section>
+      <section class="mx-auto max-w-[1280px] px-5 py-16 sm:px-6 sm:py-24">
+        <div class="mb-10 flex items-end justify-between gap-5"><div><p class="text-[9px] tracking-[0.22em] text-gold">DISPONÍVEIS NA LOJA</p><h2 class="mt-3 font-display text-3xl">Cuidados essenciais</h2></div><span class="hidden text-[9px] tracking-[0.14em] text-muted sm:block">SEM PAGAMENTO ONLINE</span></div>
+        <div id="products-grid" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-live="polite"><p class="col-span-full border border-dashed border-line p-10 text-center text-xs text-muted">A carregar produtos…</p></div>
+      </section>
+    </main>
+
+    <div data-footer-slot></div>
+
+    <dialog id="product-dialog" class="product-dialog m-auto w-[calc(100%-2rem)] max-w-4xl border border-line bg-panel p-0 text-cream"><div id="product-detail"></div></dialog>
+  </body>
+</html>

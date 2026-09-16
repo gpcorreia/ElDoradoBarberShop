@@ -1,0 +1,226 @@
+.booking-hero {
+  background:
+    linear-gradient(90deg, rgba(10, 10, 10, 0.97), rgba(10, 10, 10, 0.72)),
+    url("https://lh3.googleusercontent.com/aida-public/AB6AXuBWa3G54_URPLHur08AmWzFI0EtP_e3RGbUanW-GkaTk0qlCIrW7B0LdlFNcjq_lLN_S4TcHlYDw1J8e8QZpUm4xPUpe4Jbm00aQaG3c1whKwoikeFYooNcrGaYfnHEzB18kzjhzqLTQ0A6MCx1d3HDOL90wwg9K2xE1zV3_5jACI2r4W5rru1axBP9N4yoTkE4RykQF8P5O6geAlwhyHzeGysme8s9HkcIoEB1kpkBaKR7lFBuDigDIH9oatWDpINCIos6bBdrPCg") center 42% / cover;
+}
+
+.booking-step {
+  position: relative;
+}
+
+.booking-step:not(:last-child)::after {
+  background: #4e4639;
+  content: "";
+  height: 1px;
+  left: calc(50% + 18px);
+  position: absolute;
+  top: 15px;
+  width: calc(100% - 36px);
+}
+
+.booking-step.is-complete:not(:last-child)::after,
+.booking-step.is-active:not(:last-child)::after {
+  background: #e9c176;
+}
+
+.booking-step-dot {
+  align-items: center;
+  background: #353534;
+  border: 1px solid #4e4639;
+  border-radius: 50%;
+  display: flex;
+  height: 30px;
+  justify-content: center;
+  margin: 0 auto;
+  position: relative;
+  width: 30px;
+  z-index: 1;
+}
+
+.booking-step.is-active .booking-step-dot,
+.booking-step.is-complete .booking-step-dot {
+  background: #e9c176;
+  border-color: #e9c176;
+  color: #0a0a0a;
+}
+
+.wizard-option {
+  border: 1px solid #4e4639;
+  cursor: pointer;
+  min-width: 0;
+  outline: none;
+  position: relative;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.wizard-option:hover,
+.wizard-option:focus-visible {
+  border-color: #9a8f80;
+  transform: translateY(-2px);
+}
+
+.wizard-option.is-selected {
+  border-color: #e9c176;
+  box-shadow: inset 0 0 0 1px #e9c176;
+}
+
+.selection-check {
+  align-items: center;
+  background: #e9c176;
+  color: #0a0a0a;
+  display: none;
+  height: 22px;
+  justify-content: center;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 22px;
+  z-index: 2;
+}
+
+.wizard-option.is-selected .selection-check {
+  display: flex;
+}
+
+.wizard-panel {
+  animation: wizard-enter 180ms ease both;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 3px;
+  scrollbar-color: #4e4639 transparent;
+  scrollbar-width: thin;
+}
+
+.booking-shell {
+  display: flex;
+  flex-direction: column;
+  height: 720px;
+  min-width: 0;
+}
+
+@keyframes wizard-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.date-card.is-selected,
+.time-slot.is-selected {
+  background: #e9c176;
+  border-color: #e9c176;
+  color: #261900;
+}
+
+.time-slot:disabled,
+.date-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.booking-field {
+  background: #0e0e0e;
+  border: 1px solid #4e4639;
+  color: #e5e2e1;
+  outline: none;
+  transition: border-color 180ms ease;
+}
+
+.booking-field:focus {
+  border-color: #e9c176;
+}
+
+.booking-field::placeholder {
+  color: #77716a;
+}
+
+.summary-row {
+  align-items: center;
+  border-bottom: 1px solid rgba(78, 70, 57, 0.55);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 22px 72px 1fr;
+  padding: 12px 0;
+}
+
+.booking-alert {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.booking-alert.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.slot-conflict-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(5px);
+}
+
+.slot-conflict-dialog[open] {
+  animation: slot-conflict-enter 200ms ease both;
+}
+
+@keyframes slot-conflict-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 639px) {
+  .booking-hero {
+    background-position: 62% center;
+  }
+
+  .booking-step-label {
+    font-size: 6px;
+    letter-spacing: 0;
+  }
+
+  .booking-step:not(:last-child)::after {
+    left: calc(50% + 15px);
+    width: calc(100% - 30px);
+  }
+
+  .summary-row {
+    grid-template-columns: 20px 62px 1fr;
+  }
+}
+
+@media (min-width: 640px) {
+  .booking-shell {
+    height: 680px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .booking-shell {
+    height: 650px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wizard-panel {
+    animation: none;
+  }
+
+  .slot-conflict-dialog[open] {
+    animation: none;
+  }
+}

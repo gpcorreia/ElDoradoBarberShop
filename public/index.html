@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ElDorado Barbershop — cortes, barba e styling num ambiente premium pensado para o cavalheiro moderno."
+    />
+    <title>ElDorado Barbershop | Experiência Premium</title>
+    <link rel="icon" type="image/webp" href="/img/logo.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/tailwind.generated.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script src="/js/layout.js" defer></script>
+    <script src="/js/main.js" defer></script>
+  </head>
+  <body class="overflow-x-hidden bg-surface font-body text-cream antialiased">
+    <div data-navbar-slot></div>
+
+    <main>
+      <section id="inicio" class="relative flex h-[100svh] items-center overflow-hidden pt-20">
+        <video
+          class="absolute inset-0 h-full w-full object-cover"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
+          aria-hidden="true"
+        >
+          <source src="/img/banner.webm" type="video/webm" />
+        </video>
+        <div class="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/20 md:via-ink/70 md:to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-ink/90 via-transparent to-transparent"></div>
+
+        <div class="relative z-10 mx-auto w-full max-w-[1280px] px-5 py-16 sm:px-6 md:py-20">
+          <div class="max-w-3xl">
+            <p class="mb-5 text-[10px] font-semibold tracking-[0.3em] text-gold sm:text-xs">BEM-VINDO AO ELDORADO</p>
+            <h1 class="font-display text-[44px] font-bold leading-[1.04] tracking-[-0.025em] text-cream sm:text-6xl lg:text-[72px]">
+              Cortes com <em class="text-gold">estilo</em>.<br />Experiência premium.
+            </h1>
+            <p class="mt-7 max-w-xl text-sm leading-7 text-muted sm:text-base">
+              Mais que um corte. É sobre confiança, estilo e a melhor versão de ti. Redescobre a tua imagem num espaço pensado para o cavalheiro moderno.
+            </p>
+            <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+              <a href="/booking" class="flex items-center justify-center gap-3 bg-gold px-8 py-4 text-[11px] font-bold tracking-[0.15em] text-ink transition hover:bg-[#f3d08c] active:scale-[0.98]">
+                MARCAR AGORA
+                <span class="material-symbols-outlined text-xl">calendar_today</span>
+              </a>
+              <a href="#servicos" class="flex items-center justify-center gap-3 border border-line px-8 py-4 text-[11px] font-bold tracking-[0.15em] text-cream transition hover:border-gold hover:text-gold active:scale-[0.98]">
+                VER SERVIÇOS
+                <span class="material-symbols-outlined text-xl">arrow_forward</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <section aria-labelledby="experience-title" class="border-b border-line bg-ink py-16 md:py-20">
+        <div class="mx-auto max-w-[1280px] px-5 sm:px-6">
+          <div class="reveal text-center">
+            <p class="text-[10px] font-semibold tracking-[0.3em] text-gold">A EXPERIÊNCIA ELDORADO</p>
+            <h2 id="experience-title" class="mt-4 font-display text-3xl font-semibold md:text-4xl">Tudo pensado ao detalhe</h2>
+            <span class="section-rule mx-auto mt-6"></span>
+          </div>
+          <div class="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <article class="reveal group border border-line bg-panel/60 p-6 transition hover:border-gold">
+              <span class="flex h-12 w-12 items-center justify-center border border-gold text-gold"><span class="material-symbols-outlined text-3xl">content_cut</span></span>
+              <h3 class="mt-5 font-display text-xl">Profissionais experientes</h3>
+              <p class="mt-3 text-xs leading-5 text-muted">Técnica, precisão e aconselhamento adaptado ao teu estilo.</p>
+            </article>
+            <article class="reveal group border border-line bg-panel/60 p-6 transition hover:border-gold">
+              <span class="flex h-12 w-12 items-center justify-center border border-gold text-gold"><span class="material-symbols-outlined text-3xl">inventory_2</span></span>
+              <h3 class="mt-5 font-display text-xl">Produtos premium</h3>
+              <p class="mt-3 text-xs leading-5 text-muted">Selecionados para cuidar do cabelo e da barba com qualidade.</p>
+            </article>
+            <article class="reveal group border border-line bg-panel/60 p-6 transition hover:border-gold">
+              <span class="flex h-12 w-12 items-center justify-center border border-gold text-gold"><span class="material-symbols-outlined text-3xl">loyalty</span></span>
+              <h3 class="mt-5 font-display text-xl">Atendimento pessoal</h3>
+              <p class="mt-3 text-xs leading-5 text-muted">Cada serviço começa por perceber o resultado que procuras.</p>
+            </article>
+            <article class="reveal group border border-line bg-panel/60 p-6 transition hover:border-gold">
+              <span class="flex h-12 w-12 items-center justify-center border border-gold text-gold"><span class="material-symbols-outlined text-3xl">diamond</span></span>
+              <h3 class="mt-5 font-display text-xl">Ambiente exclusivo</h3>
+              <p class="mt-3 text-xs leading-5 text-muted">Um espaço confortável, discreto e criado para abrandar.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="servicos" class="bg-surface py-20 md:py-28 lg:py-32">
+        <div class="reveal mx-auto max-w-[1280px] px-5 text-center sm:px-6">
+          <p class="text-[10px] font-semibold tracking-[0.3em] text-gold">OS NOSSOS SERVIÇOS</p>
+          <h2 class="mt-4 font-display text-3xl font-semibold md:text-4xl">Qualidade em cada detalhe</h2>
+          <span class="section-rule mx-auto mt-6"></span>
+        </div>
+
+        <div class="mx-auto mt-14 grid max-w-[1280px] grid-cols-1 gap-5 px-5 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+          <article class="reveal group flex min-h-[330px] flex-col items-center border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9">
+            <span class="material-symbols-outlined mb-7 text-5xl text-gold transition-transform group-hover:scale-110">content_cut</span>
+            <h3 class="font-display text-2xl uppercase">Corte de cabelo</h3>
+            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Corte personalizado ao teu estilo e personalidade.</p>
+            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">A PARTIR DE</p><p class="mt-1 font-display text-2xl text-gold">20€</p></div>
+          </article>
+          <article class="reveal group flex min-h-[330px] flex-col items-center border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9">
+            <span class="material-symbols-outlined mb-7 text-5xl text-gold transition-transform group-hover:scale-110">face</span>
+            <h3 class="font-display text-2xl uppercase">Barba</h3>
+            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Aparar, desenhar e cuidar da tua barba com precisão.</p>
+            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">A PARTIR DE</p><p class="mt-1 font-display text-2xl text-gold">15€</p></div>
+          </article>
+          <article class="reveal group flex min-h-[330px] flex-col items-center border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9">
+            <div class="mb-7 flex text-gold transition-transform group-hover:scale-110"><span class="material-symbols-outlined text-4xl">content_cut</span><span class="material-symbols-outlined text-4xl">face</span></div>
+            <h3 class="font-display text-2xl uppercase">Corte + barba</h3>
+            <p class="mt-4 flex-1 text-sm leading-6 text-muted">O combo perfeito para um look impecável e completo.</p>
+            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">A PARTIR DE</p><p class="mt-1 font-display text-2xl text-gold">30€</p></div>
+          </article>
+          <article class="reveal group flex min-h-[330px] flex-col items-center border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9">
+            <span class="material-symbols-outlined mb-7 text-5xl text-gold transition-transform group-hover:scale-110">sanitizer</span>
+            <h3 class="font-display text-2xl uppercase">Styling</h3>
+            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Finalização com produtos premium para o toque final.</p>
+            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">A PARTIR DE</p><p class="mt-1 font-display text-2xl text-gold">10€</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="galeria" class="bg-ink py-20 md:py-28 lg:py-32">
+        <div class="reveal mx-auto max-w-[1280px] px-5 text-center sm:px-6">
+          <p class="text-[10px] font-semibold tracking-[0.3em] text-gold">GALERIA</p>
+          <h2 class="mt-4 font-display text-3xl font-semibold md:text-4xl">Estilo que fala por si</h2>
+          <span class="section-rule mx-auto mt-6"></span>
+        </div>
+        <div class="mx-auto mt-14 grid max-w-[1280px] grid-cols-2 gap-3 px-5 sm:px-6 md:grid-cols-3 lg:grid-cols-6">
+          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKjtjemJ6D6qtZHEnt7eBucOAQ-_IyF4e8RyXfaiWJilX064fHHoQhN4-Ez96c2zebFunzZ_zbFndeSUChU6yc2kWKWYpZKVjmemtBAciyEbGFqsPcFrDW_od8ozn3Dzn1aCs7wFXch95MDhH_TnP9M-2_NGA_P3np5mvQWnNX9HHgd5DA_gPDZDIoCI0W15zX-OKPV14YlSXRYjfRvRhH7SNEatuMH1MdJc3baxeEeSs6WT3XvNh3Q-HZALyOiOIBffAfWVLQAcE" alt="Corte degradê com barba cuidada" loading="lazy" /></figure>
+          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbYvkvigkSlYdp_qEWVwht9mK8Uk2dQUkdHSob2PtoUhrwHudUggwZ2sjjBtgf1tkJKb1vt0-AauIEWO2tvjKCg2p3eiQu1ATyjJ2E2ArCUAQi0hMbqZk_ju8g1S5ztifYYMbONFYw3--Qj66qmpJ4n8jHWk4CJ7G2GZ-qTczahQ_RyJNf3OpU1GY0WJ_fi_U0o_CTe4v4ouvhi5pwP9INamc_MUHiceBfyM0JInvOnICmpEqUIrcJSO1uj7omyCLDp9bABy0hH4w" alt="Penteado pompadour clássico" loading="lazy" /></figure>
+          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4G-e7qg8wm5rjvCH93tSVNnE1hyX3GfIEdy_fsYFi7ZXiFP59-cQ7tGopzRkmeBf2CM8cySt4anAlRF8IGpDev4yUN9KagkVoW8987fXWNCX3MrYrKvzIplHo_txxkv4GShgjs36J16ftjL3vPljuCcJbdVF7OB_TcqE_TPi02ZzBrygMRTLHbInIhKh3dfj-j_Wy1CWbJvCAGxO24kAUYO6MX-4muxPk3n5sdI6lAHeyvOKcE0s6HK8hBMlJcpxePL8yOhYJAiA" alt="Corte texturizado moderno" loading="lazy" /></figure>
+          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQg3gwNEPAtOPDeIZkzG_wWCGY92D82v65Jz95el5SlBbscuCYLL6FcyhvklgEm-NEGp5mKRNYK9W5CnUV5EXktlnpiiVXeoN8k4Nep0HbA3hQvLnCt92mXx0kTV0tS7z0GMHnnFB-wwJaj_v8p_TvkSkZHdxpuRasT6SHjFueP2fTo0cFwErkhUBUwxqapshHR_wf4HJpNEWq7oaaFJ9HEOIWb4tsOzWaqPoPJKfd44R19MNVJXIw4KA2OPa1XYF5mE3H_zvV_0Q" alt="Corte clássico e barba longa" loading="lazy" /></figure>
+          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7Fglf5IQ6Qk360uk5CYs0-h3CGh17SxXZzSKP27oZfi6xmPjSYyU0x0mUjAwHg2D7qWKggKewhYBcOLDJxVn6GUv6v1ImmJ3VCfkHPDIBonBpUTOPOsdaoC0qtkkPEYYT6vDuyJ8P4_lM7igJ-Xp1l17_UpAqNva9yuarK06ev_9TXnliYu5SUm46DV88ZcCxpBxvctfVh89mQLglpRPvVLIZ3bvQx0rENxO6sd9fWCdrl1_fLosleLyqRaTyxDS-h4AKdxeHCNw" alt="Trabalho de precisão na linha do cabelo" loading="lazy" /></figure>
+          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDZ6NRezwSfFsL6E0u0D7e3DrgVShiNf8NvrqtC9T9bZ3jGK9-B7oQYc_1R6vRcuo4bvG51a98Q_cGfN70VKTGMa4j65GPY6Cfv1AurO0tXKoczdTu0LsSWEfLaHLyZP946n-xi4sI18oRIJo-oetNbaQV6bckNTBzTZvnNE3e6X3Wq0mUgYZMepK2NUTHsKJbJ7OADgRe6Fencger77ynW66TlLwQhHvA43M9psn_fb3zfDW1RvVai_HLHr3SB_MsnO8_T4xO9AA" alt="Cabelo encaracolado com fade" loading="lazy" /></figure>
+        </div>
+        <div class="mt-12 text-center"><a href="#galeria" class="inline-flex items-center gap-3 border border-[#9a8f80] px-8 py-4 text-[10px] font-semibold tracking-[0.15em] transition hover:border-gold hover:text-gold">VER MAIS NA GALERIA <span class="material-symbols-outlined text-lg">arrow_forward</span></a></div>
+      </section>
+
+      <section id="sobre" class="bg-surface py-20 md:py-28 lg:py-32">
+        <div class="reveal mx-auto max-w-[1280px] px-5 text-center sm:px-6">
+          <p class="text-[10px] font-semibold tracking-[0.3em] text-gold">O QUE DIZEM SOBRE NÓS</p>
+          <h2 class="mt-4 font-display text-3xl font-semibold md:text-4xl">A confiança dos nossos clientes</h2>
+          <span class="section-rule mx-auto mt-6"></span>
+        </div>
+        <div class="mx-auto mt-14 grid max-w-[1280px] grid-cols-1 gap-5 px-5 sm:px-6 md:grid-cols-3">
+          <article class="reveal flex flex-col border border-line bg-panel p-7">
+            <div class="mb-5 flex text-gold" aria-label="5 estrelas"><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span></div>
+            <blockquote class="flex-1 text-sm italic leading-6 text-muted">“Melhor barbearia da zona. Atendimento impecável e ambiente incrível. Sinto-me renovado sempre que saio daqui.”</blockquote>
+          </article>
+          <article class="reveal flex flex-col border border-line bg-panel p-7">
+            <div class="mb-5 flex text-gold" aria-label="5 estrelas"><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span></div>
+            <blockquote class="flex-1 text-sm italic leading-6 text-muted">“Cortes sempre perfeitos e profissionais muito atentos ao detalhe. Já não troco por nada!”</blockquote>
+          </article>
+          <article class="reveal flex flex-col border border-line bg-panel p-7">
+            <div class="mb-5 flex text-gold" aria-label="5 estrelas"><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span><span class="material-symbols-outlined">star</span></div>
+            <blockquote class="flex-1 text-sm italic leading-6 text-muted">“Simplesmente a melhor experiência que já tive numa barbearia. Top em tudo, desde a receção até ao styling final.”</blockquote>
+          </article>
+        </div>
+      </section>
+
+    </main>
+
+    <div data-footer-slot></div>
+  </body>
+</html>
