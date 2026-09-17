@@ -1,36 +1,21 @@
 import "dotenv/config";
 
 import compression from "compression";
-import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
 import fs from "fs";
 import helmet from "helmet";
 import multer from "multer";
 import path from "path";
 import apiRoutes from "./src/routes/api.routes";
+import { env } from "./src/config/env";
 import { getPublicPath } from "./src/config/paths";
-import { IS_PRODUCTION } from "./src/config/constants";
-
-dotenv.config({ path: path.resolve(process.cwd(), ".env.admin"), override: false, quiet: true });
-
-const requiredEnvironment = ["SUPABASE_URL", "JWT_SECRET_KEY", "ADMIN_EMAIL", "ADMIN_PASSWORD_HASH"];
-const missingEnvironment = requiredEnvironment.filter((name) => !process.env[name]?.trim());
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() && !process.env.SUPABASE_KEY?.trim()) {
-  missingEnvironment.push("SUPABASE_SERVICE_ROLE_KEY");
-}
-if (missingEnvironment.length) {
-  throw new Error(`Variáveis de ambiente em falta: ${missingEnvironment.join(", ")}`);
-}
-if ((process.env.JWT_SECRET_KEY?.length ?? 0) < 32) {
-  console.warn("Aviso de segurança: JWT_SECRET_KEY deve ter pelo menos 32 caracteres aleatórios.");
-}
 
 const app = express();
-const servePages = process.env.SERVE_PAGES !== "false";
+const servePages = env.servePages;
 let errorPagePath: string | undefined;
 
 app.disable("x-powered-by");
-if (process.env.TRUST_PROXY === "true") app.set("trust proxy", 1);
+app.set("trust proxy", env.trustProxy ? 1 : false);
 
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
@@ -47,7 +32,7 @@ app.use(helmet({
       objectSrc: ["'none'"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "https://fonts.googleapis.com"],
-      upgradeInsecureRequests: IS_PRODUCTION ? [] : null,
+      upgradeInsecureRequests: env.isProduction ? [] : null,
     },
   },
 }));
@@ -66,7 +51,7 @@ if (servePages) {
 
   app.use(express.static(publicPath, {
     etag: true,
-    maxAge: IS_PRODUCTION ? "1h" : 0,
+    maxAge: env.isProduction ? "1h" : 0,
     setHeaders: (res, filePath) => {
       if (filePath.endsWith(".html")) res.setHeader("Cache-Control", "no-cache");
     },

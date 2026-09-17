@@ -1,6 +1,8 @@
+import { env } from "./env";
+
 export const ADMIN_COOKIE_NAME = "eldorado_session";
-export const ADMIN_SESSION_MAX_AGE_MS = 8 * 60 * 60 * 1000;
-export const IS_PRODUCTION = process.env.NODE_ENV === "production";
+export const ADMIN_SESSION_MAX_AGE_MS = env.adminSessionMaxAgeMs;
+export const IS_PRODUCTION = env.isProduction;
 
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

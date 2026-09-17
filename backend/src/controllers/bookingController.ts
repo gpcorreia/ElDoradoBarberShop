@@ -3,6 +3,7 @@ import { createBooking, getAppointmentsAvailable, getServiceDuration, getService
 import { barberExists, getBarbers } from "../repositories/barbers";
 import { BookingRequestBody } from "../types/data";
 import { isEmail, isIsoDate, isLocalTimestamp, isPhone, isUuid, lisbonLocalTimestamp } from "../config/validation";
+import { sendBookingNotification } from "../services/emailService";
 
 function isSunday(day: string): boolean {
   return new Date(`${day}T12:00:00Z`).getUTCDay() === 0;
@@ -45,6 +46,10 @@ export async function handleBooking(req: Request, res: Response) {
   if (result === "error") {
     return res.status(500).json({ message: "Não foi possível concluir a marcação. Tenta novamente." });
   }
+
+  sendBookingNotification(bookingInfo).catch((error) => {
+    console.error("A marcação foi criada, mas a notificação por email falhou:", error);
+  });
 
   return res.status(201).json({ message: "Marcação criada com sucesso." });
 }

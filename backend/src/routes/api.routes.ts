@@ -56,7 +56,7 @@ const bookingLimiter = rateLimit({
 router.use(apiLimiter);
 router.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
 
-router.post("/booking", bookingLimiter, handleBooking);
+router.post("/booking", requireSameOrigin, bookingLimiter, handleBooking);
 
 router.get("/appointments/:barber_id/:day", searchAppointmentsAvailable);
 
