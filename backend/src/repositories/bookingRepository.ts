@@ -53,6 +53,17 @@ export async function getServiceDuration(serviceId: string): Promise<number | nu
   return Number.isInteger(duration) && duration > 0 ? duration : null;
 }
 
+export async function getServiceName(serviceId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("services")
+    .select("name")
+    .eq("id", serviceId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return typeof data?.name === "string" ? data.name : null;
+}
+
 export async function createBooking(bookingInfo: BookingRequestBody): Promise<CreateBookingResult> {
   let durationMinutes: number | null;
   try {

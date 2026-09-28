@@ -31,7 +31,7 @@ router.get(["/admin/login", "/admin-login.html"], (_req, res) => {
   res.sendFile(path.join(publicDir, "admin-login.html"));
 });
 
-router.get(["/admin", "/admin.html"], protectAdminPage, (_req, res) => {
+router.get(["/admin", "/admin.html", "/admin/publish"], protectAdminPage, (_req, res) => {
   res.sendFile(path.join(publicDir, "admin.html"));
 });
 
