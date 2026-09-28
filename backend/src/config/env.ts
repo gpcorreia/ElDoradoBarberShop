@@ -49,12 +49,24 @@ if (!/^\$2[aby]\$\d{2}\$.{53}$/.test(adminPasswordHash)) {
 
 const gmailUser = process.env.GMAIL_USER?.trim() ?? "";
 const gmailAppPassword = process.env.GMAIL_APP_PASSWORD?.trim() ?? "";
+const gmailApiClientId = process.env.GMAIL_API_CLIENT_ID?.trim() ?? "";
+const gmailApiClientSecret = process.env.GMAIL_API_CLIENT_SECRET?.trim() ?? "";
+const gmailApiRefreshToken = process.env.GMAIL_API_REFRESH_TOKEN?.trim() ?? "";
 const contactToEmail = process.env.CONTACT_TO_EMAIL?.trim() || gmailUser;
-const emailConfigured = Boolean(gmailUser && gmailAppPassword && contactToEmail);
+const gmailApiValues = [gmailApiClientId, gmailApiClientSecret, gmailApiRefreshToken];
+const gmailApiConfigured = Boolean(gmailUser && contactToEmail && gmailApiValues.every(Boolean));
+const gmailSmtpConfigured = Boolean(gmailUser && gmailAppPassword && contactToEmail);
+const emailConfigured = gmailApiConfigured || gmailSmtpConfigured;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-if ((gmailUser || gmailAppPassword || contactToEmail) && !emailConfigured) {
-  throw new Error("Para ativar notificações, configura GMAIL_USER, GMAIL_APP_PASSWORD e CONTACT_TO_EMAIL.");
+if (gmailApiValues.some(Boolean) && !gmailApiValues.every(Boolean)) {
+  throw new Error("Para usar a Gmail API, configura GMAIL_API_CLIENT_ID, GMAIL_API_CLIENT_SECRET e GMAIL_API_REFRESH_TOKEN.");
+}
+if ((gmailAppPassword || gmailApiValues.some(Boolean)) && (!gmailUser || !contactToEmail)) {
+  throw new Error("Para ativar notificações, configura também GMAIL_USER e CONTACT_TO_EMAIL.");
+}
+if ((gmailUser || gmailAppPassword || gmailApiValues.some(Boolean) || process.env.CONTACT_TO_EMAIL?.trim()) && !emailConfigured) {
+  throw new Error("Configura a Gmail API ou, fora do Render gratuito, uma GMAIL_APP_PASSWORD.");
 }
 if (emailConfigured && (!emailPattern.test(gmailUser) || !emailPattern.test(contactToEmail))) {
   throw new Error("GMAIL_USER e CONTACT_TO_EMAIL devem ser endereços de email válidos.");
@@ -77,6 +89,11 @@ export const env = Object.freeze({
   adminSessionMaxAgeMs,
   gmailUser,
   gmailAppPassword,
+  gmailApiClientId,
+  gmailApiClientSecret,
+  gmailApiRefreshToken,
+  gmailApiConfigured,
+  gmailSmtpConfigured,
   contactToEmail,
   emailConfigured,
 });

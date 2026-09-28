@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { env } from "../config/env";
 import { getPublicPath } from "../config/paths";
 import { BookingRequestBody } from "../types/data";
@@ -39,7 +40,8 @@ function bookingConfirmationHtml(
   booking: BookingRequestBody,
   details: BookingConfirmationDetails,
   date: string,
-  time: string
+  time: string,
+  logoSource: string
 ): string {
   const customerName = escapeHtml(booking.customer_name);
   const serviceName = escapeHtml(details.serviceName);
@@ -79,7 +81,7 @@ function bookingConfirmationHtml(
           <table role="presentation" class="email-shell shell-dark" width="600" cellspacing="0" cellpadding="0" border="0" bgcolor="#12110f" style="width:600px;max-width:600px;background-color:#12110f;background-image:linear-gradient(#12110f,#12110f);border:1px solid #393329;">
             <tr>
               <td align="center" bgcolor="#090909" style="padding:38px 24px 30px;background:#090909;border-bottom:1px solid #393329;">
-                <img src="cid:eldorado-logo" width="104" alt="ElDorado Barbershop" style="display:block;width:104px;height:auto;border:0;outline:none;">
+                <img src="${escapeHtml(logoSource)}" width="104" alt="ElDorado Barbershop" style="display:block;width:104px;height:auto;border:0;outline:none;">
                 <div style="margin-top:20px;color:#e9c176;font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;">ElDorado Barbershop</div>
               </td>
             </tr>
@@ -146,18 +148,79 @@ function bookingConfirmationHtml(
 </html>`;
 }
 
+function encodeMimeHeader(value: string): string {
+  return `=?UTF-8?B?${Buffer.from(value, "utf8").toString("base64")}?=`;
+}
+
+function encodeMimeBody(value: string): string {
+  return Buffer.from(value, "utf8").toString("base64").match(/.{1,76}/g)?.join("\r\n") ?? "";
+}
+
+function createRawEmail(to: string, subject: string, text: string, html: string): string {
+  const boundary = `eldorado-${randomUUID()}`;
+  const message = [
+    `From: ElDorado Barbershop <${env.gmailUser}>`,
+    `To: ${to}`,
+    `Reply-To: ${env.contactToEmail}`,
+    `Subject: ${encodeMimeHeader(subject)}`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    'Content-Type: text/plain; charset="UTF-8"',
+    "Content-Transfer-Encoding: base64",
+    "",
+    encodeMimeBody(text),
+    `--${boundary}`,
+    'Content-Type: text/html; charset="UTF-8"',
+    "Content-Transfer-Encoding: base64",
+    "",
+    encodeMimeBody(html),
+    `--${boundary}--`,
+    "",
+  ].join("\r\n");
+
+  return Buffer.from(message, "utf8").toString("base64url");
+}
+
+async function sendWithGmailApi(to: string, subject: string, text: string, html: string): Promise<void> {
+  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: env.gmailApiClientId,
+      client_secret: env.gmailApiClientSecret,
+      refresh_token: env.gmailApiRefreshToken,
+      grant_type: "refresh_token",
+    }),
+  });
+  const tokenResult = await tokenResponse.json() as { access_token?: string; error?: string; error_description?: string };
+  if (!tokenResponse.ok || !tokenResult.access_token) {
+    throw new Error(`Não foi possível autenticar na Gmail API: ${tokenResult.error_description ?? tokenResult.error ?? tokenResponse.status}.`);
+  }
+
+  const sendResponse = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${tokenResult.access_token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ raw: createRawEmail(to, subject, text, html) }),
+  });
+  if (!sendResponse.ok) {
+    const result = await sendResponse.json().catch(() => ({})) as { error?: { message?: string } };
+    throw new Error(`A Gmail API recusou o email: ${result.error?.message ?? sendResponse.status}.`);
+  }
+}
+
 export async function sendBookingConfirmation(
   booking: BookingRequestBody,
   details: BookingConfirmationDetails
 ): Promise<void> {
   if (!env.emailConfigured) return;
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: env.gmailUser, pass: env.gmailAppPassword },
-  });
-
   const { date, time } = formatBookingDate(booking.starts_at);
+  const subject = "Confirmação da tua marcação — ElDorado Barbershop";
   const text = [
     `Olá ${booking.customer_name},`,
     "",
@@ -173,14 +236,31 @@ export async function sendBookingConfirmation(
     "Até breve,",
     "ElDorado Barbershop",
   ].join("\n");
+  const remoteLogo = new URL("/img/logo-email.png", `${env.appOrigin}/`).href;
+  const html = bookingConfirmationHtml(booking, details, date, time, remoteLogo);
+
+  if (env.gmailApiConfigured) {
+    await sendWithGmailApi(
+      booking.customer_email,
+      subject,
+      text,
+      html
+    );
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: env.gmailUser, pass: env.gmailAppPassword },
+  });
 
   await transporter.sendMail({
     from: `ElDorado Barbershop <${env.gmailUser}>`,
     to: booking.customer_email,
     replyTo: env.contactToEmail,
-    subject: "Confirmação da tua marcação — ElDorado Barbershop",
+    subject,
     text,
-    html: bookingConfirmationHtml(booking, details, date, time),
+    html: bookingConfirmationHtml(booking, details, date, time, "cid:eldorado-logo"),
     attachments: [{
       filename: "eldorado-logo.png",
       path: path.join(getPublicPath(), "img", "logo-email.png"),
