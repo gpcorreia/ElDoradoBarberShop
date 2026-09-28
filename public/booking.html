@@ -29,35 +29,21 @@
         </div>
       </section>
 
-      <section class="border-b border-line bg-ink/45 py-7 sm:py-9">
-        <div id="booking-progress" class="mx-auto grid max-w-3xl grid-cols-5 px-3 sm:px-6" aria-label="Progresso da marcação"></div>
+      <section class="booking-progress-section border-b border-line bg-ink/45 py-5 sm:py-7">
+        <div class="mx-auto max-w-[1180px] px-4 sm:px-6">
+          <p class="mb-3 text-[8px] font-semibold tracking-[0.18em] text-muted sm:hidden">TOCA NUM PASSO PARA VOLTAR E EDITAR</p>
+          <div id="booking-progress" class="booking-progress" aria-label="Progresso da marcação"></div>
+        </div>
       </section>
 
-      <section class="mx-auto grid min-w-0 max-w-[1180px] gap-5 px-4 py-8 sm:px-6 sm:py-12 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8 lg:py-16">
-        <article class="booking-shell order-2 min-w-0 border border-line bg-[#171616] p-5 sm:p-8 lg:order-1 lg:p-10">
-          <div class="mb-7 flex items-center justify-between gap-4">
-            <button id="previous-step" type="button" class="invisible flex items-center gap-1 text-[9px] font-semibold tracking-[0.14em] text-muted transition hover:text-gold"><span class="material-symbols-outlined text-lg">arrow_back</span>VOLTAR</button>
-            <span id="step-counter" class="text-[9px] tracking-[0.16em] text-muted">PASSO 1 DE 5</span>
+      <section class="booking-layout mx-auto grid min-w-0 max-w-[980px] px-4 py-8 sm:px-6 sm:py-12 lg:py-16">
+        <article class="booking-shell order-1 min-w-0 border border-line bg-[#171616] p-5 sm:p-8 lg:order-1 lg:p-10">
+          <div class="mb-6 flex items-center justify-between gap-4 border-b border-line/60 pb-4 sm:mb-8">
+            <span class="flex items-center gap-2 text-[8px] font-semibold tracking-[0.16em] text-gold"><span class="material-symbols-outlined text-base">edit_calendar</span>MARCAÇÃO ONLINE</span>
+            <span id="step-counter" class="text-[8px] tracking-[0.16em] text-muted">PASSO 1 DE 5</span>
           </div>
           <div id="booking-step" class="wizard-panel" aria-live="polite"></div>
         </article>
-
-        <aside class="order-1 border border-line bg-panel lg:order-2 lg:sticky lg:top-24" aria-labelledby="summary-title">
-          <button id="summary-toggle" type="button" aria-expanded="false" class="flex w-full items-center justify-between p-4 text-left lg:pointer-events-none lg:p-6">
-            <span><span class="block text-[8px] font-semibold tracking-[0.2em] text-gold">A TUA SELEÇÃO</span><strong id="summary-mobile-title" class="mt-1 block font-display text-lg font-medium">Começa por escolher</strong></span>
-            <span id="summary-chevron" class="material-symbols-outlined text-gold lg:hidden">expand_more</span>
-          </button>
-          <div id="summary-content" class="hidden border-t border-line px-5 pb-5 lg:block lg:border-0 lg:px-6 lg:pb-6">
-            <h2 id="summary-title" class="hidden border-b border-line pb-5 font-display text-xl uppercase text-gold lg:block">Resumo</h2>
-            <dl class="mt-1 text-[9px] lg:mt-2">
-              <div class="summary-row"><span class="material-symbols-outlined text-lg text-gold">person</span><dt class="text-muted">BARBEIRO</dt><dd id="summary-barber" class="text-right">—</dd></div>
-              <div class="summary-row"><span class="material-symbols-outlined text-lg text-gold">content_cut</span><dt class="text-muted">SERVIÇO</dt><dd id="summary-service" class="text-right">—</dd></div>
-              <div class="summary-row"><span class="material-symbols-outlined text-lg text-gold">calendar_today</span><dt class="text-muted">DATA</dt><dd id="summary-date" class="text-right">—</dd></div>
-              <div class="summary-row"><span class="material-symbols-outlined text-lg text-gold">schedule</span><dt class="text-muted">HORÁRIO</dt><dd id="summary-time" class="text-right">—</dd></div>
-            </dl>
-            <div class="mt-5 flex items-end justify-between border-t border-line pt-5"><span class="font-display text-lg">Total</span><strong id="summary-price" class="font-display text-3xl font-medium text-gold">—</strong></div>
-          </div>
-        </aside>
       </section>
     </main>
 

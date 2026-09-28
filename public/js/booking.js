@@ -23,6 +23,7 @@ const steps = ["BARBEIRO", "SERVIÇO", "DATA E HORA", "DADOS", "CONFIRMAR"];
 
 const state = {
   currentStep: 0,
+  maxStepReached: 0,
   barber: null,
   service: null,
   date: null,
@@ -36,12 +37,7 @@ const state = {
 const elements = {
   progress: document.querySelector("#booking-progress"),
   panel: document.querySelector("#booking-step"),
-  previous: document.querySelector("#previous-step"),
   counter: document.querySelector("#step-counter"),
-  summaryToggle: document.querySelector("#summary-toggle"),
-  summaryContent: document.querySelector("#summary-content"),
-  summaryChevron: document.querySelector("#summary-chevron"),
-  summaryMobileTitle: document.querySelector("#summary-mobile-title"),
   alert: document.querySelector("#booking-alert"),
   alertIcon: document.querySelector("#alert-icon"),
   alertTitle: document.querySelector("#alert-title"),
@@ -50,14 +46,7 @@ const elements = {
   slotConflictDialog: document.querySelector("#slot-conflict-dialog"),
   slotConflictTime: document.querySelector("#slot-conflict-time"),
   closeSlotConflict: document.querySelector("#close-slot-conflict"),
-  chooseAnotherSlot: document.querySelector("#choose-another-slot"),
-  summary: {
-    barber: document.querySelector("#summary-barber"),
-    service: document.querySelector("#summary-service"),
-    date: document.querySelector("#summary-date"),
-    time: document.querySelector("#summary-time"),
-    price: document.querySelector("#summary-price")
-  }
+  chooseAnotherSlot: document.querySelector("#choose-another-slot")
 };
 
 function toIsoDate(date) {
@@ -155,9 +144,16 @@ function getVisibleDates() {
 }
 
 function renderProgress() {
-  elements.progress.innerHTML = steps.map((label, index) => progressStep(label, index, state.currentStep)).join("");
-  elements.previous.classList.toggle("invisible", state.currentStep === 0 || state.completed);
+  elements.progress.innerHTML = steps.map((label, index) => progressStep(label, index, state.currentStep, state.maxStepReached)).join("");
   elements.counter.textContent = state.completed ? "CONCLUÍDO" : `PASSO ${state.currentStep + 1} DE ${steps.length}`;
+
+  const activeStep = elements.progress.querySelector(".is-active");
+  if (activeStep && elements.progress.scrollWidth > elements.progress.clientWidth) {
+    requestAnimationFrame(() => elements.progress.scrollTo({
+      left: activeStep.offsetLeft - ((elements.progress.clientWidth - activeStep.offsetWidth) / 2),
+      behavior: "smooth"
+    }));
+  }
 }
 
 function renderBarberStep() {
@@ -170,7 +166,7 @@ function renderBarberStep() {
 function renderServiceStep() {
   elements.panel.innerHTML = `
     ${stepHeading("PASSO 2", "Escolhe o teu serviço", "Seleciona a experiência que procuras. O preço e a duração ficam sempre visíveis.")}
-    <div class="grid grid-cols-2 gap-3">${services.map((service) => serviceCard(service, state.service?.id === service.id, formatPrice(service.price))).join("")}</div>
+    <div class="service-grid grid grid-cols-2 gap-3">${services.map((service) => serviceCard(service, state.service?.id === service.id, formatPrice(service.price))).join("")}</div>
   `;
 }
 
@@ -209,10 +205,10 @@ function renderDetailsStep() {
   elements.panel.innerHTML = `
     ${stepHeading("PASSO 4", "Só faltam os teus dados", "Precisamos destes contactos para confirmar ou ajustar a tua marcação.")}
     <form data-form="customer" class="mx-auto max-w-xl space-y-4">
-      <label class="block"><span class="mb-2 block text-[8px] font-semibold tracking-wider">NOME COMPLETO *</span><input name="name" value="${escapeHtml(state.customer.name)}" required minlength="2" maxlength="100" autocomplete="name" placeholder="Ex.: João Silva" class="booking-field w-full px-4 py-3 text-sm" /></label>
+      <label class="block"><span class="mb-2 block text-[8px] font-semibold tracking-wider">NOME COMPLETO *</span><span class="booking-input-wrap"><span class="material-symbols-outlined booking-input-icon" aria-hidden="true">person</span><input name="name" value="${escapeHtml(state.customer.name)}" required minlength="2" maxlength="100" autocomplete="name" placeholder="Ex.: João Silva" class="booking-field w-full px-4 py-3 text-sm" /></span></label>
       <div class="grid gap-4 sm:grid-cols-2">
-        <label class="block"><span class="mb-2 block text-[8px] font-semibold tracking-wider">TELEFONE *</span><input name="phone" value="${escapeHtml(state.customer.phone)}" required minlength="6" maxlength="20" autocomplete="tel" type="tel" pattern="[+0-9][0-9 .()\\-]+" placeholder="912 345 678" class="booking-field w-full px-4 py-3 text-sm" /></label>
-        <label class="block"><span class="mb-2 block text-[8px] font-semibold tracking-wider">E-MAIL *</span><input name="email" value="${escapeHtml(state.customer.email)}" required maxlength="150" autocomplete="email" type="email" placeholder="exemplo@email.com" class="booking-field w-full px-4 py-3 text-sm" /></label>
+        <label class="block"><span class="mb-2 block text-[8px] font-semibold tracking-wider">TELEFONE *</span><span class="booking-input-wrap"><span class="material-symbols-outlined booking-input-icon" aria-hidden="true">call</span><input name="phone" value="${escapeHtml(state.customer.phone)}" required minlength="6" maxlength="20" autocomplete="tel" type="tel" pattern="[+0-9][0-9 .()\\-]+" placeholder="912 345 678" class="booking-field w-full px-4 py-3 text-sm" /></span></label>
+        <label class="block"><span class="mb-2 block text-[8px] font-semibold tracking-wider">E-MAIL *</span><span class="booking-input-wrap"><span class="material-symbols-outlined booking-input-icon" aria-hidden="true">mail</span><input name="email" value="${escapeHtml(state.customer.email)}" required maxlength="150" autocomplete="email" type="email" placeholder="exemplo@email.com" class="booking-field w-full px-4 py-3 text-sm" /></span></label>
       </div>
       <button class="mt-3 flex w-full items-center justify-center gap-3 bg-gold px-5 py-4 text-[9px] font-bold tracking-[0.2em] text-ink hover:bg-[#f3d08c]">REVER MARCAÇÃO<span class="material-symbols-outlined text-lg">arrow_forward</span></button>
     </form>
@@ -222,7 +218,7 @@ function renderDetailsStep() {
 function renderConfirmationStep() {
   elements.panel.innerHTML = `
     ${stepHeading("ÚLTIMO PASSO", "Confirma a tua marcação", "Revê os dados abaixo antes de enviares o pedido.")}
-    <div class="mx-auto max-w-xl border border-line bg-panel p-5 sm:p-7">
+    <div class="confirmation-card mx-auto max-w-xl border border-line bg-panel p-5 sm:p-7">
       <dl class="space-y-4 text-xs">
         <div class="flex justify-between gap-5"><dt class="text-muted">Barbeiro</dt><dd>${escapeHtml(state.barber.name)}</dd></div>
         <div class="flex justify-between gap-5"><dt class="text-muted">Serviço</dt><dd>${escapeHtml(state.service.name)}</dd></div>
@@ -262,11 +258,11 @@ function renderCurrentStep() {
   else if (state.currentStep === 3) renderDetailsStep();
   else renderConfirmationStep();
 
-  updateSummary();
 }
 
 function goToStep(step) {
   state.currentStep = Math.max(0, Math.min(step, steps.length - 1));
+  state.maxStepReached = Math.max(state.maxStepReached, state.currentStep);
   renderCurrentStep();
   elements.panel.scrollTop = 0;
 }
@@ -307,15 +303,6 @@ async function sendBooking(payload) {
   return result;
 }
 
-function updateSummary() {
-  elements.summary.barber.textContent = state.barber?.name ?? "—";
-  elements.summary.service.textContent = state.service?.name ?? "—";
-  elements.summary.date.textContent = state.date ? formatDate(state.date) : "—";
-  elements.summary.time.textContent = state.time ?? "—";
-  elements.summary.price.textContent = state.service ? formatPrice(state.service.price) : "—";
-  elements.summaryMobileTitle.textContent = state.service?.name ?? state.barber?.name ?? "Começa por escolher";
-}
-
 function showAlert(title, message, error = false) {
   elements.alertTitle.textContent = title;
   elements.alertMessage.textContent = message;
@@ -334,9 +321,8 @@ function closeSlotConflict() {
 }
 
 async function initializeBooking() {
-  elements.previous.classList.add("invisible");
   elements.counter.textContent = "A CARREGAR";
-  elements.progress.innerHTML = steps.map((label, index) => progressStep(label, index, 0)).join("");
+  elements.progress.innerHTML = steps.map((label, index) => progressStep(label, index, 0, 0)).join("");
   elements.panel.innerHTML = `
     <div class="flex min-h-[390px] flex-col items-center justify-center text-center">
       <span class="material-symbols-outlined animate-spin text-4xl text-gold">progress_activity</span>
@@ -372,13 +358,19 @@ elements.panel.addEventListener("click", async (event) => {
     state.barber = barbers.find((barber) => barber.id === control.dataset.id);
     state.date = null;
     state.time = null;
+    state.availableSlots = [];
+    state.maxStepReached = Math.min(state.maxStepReached, state.service ? 2 : 1);
     goToStep(1);
   } else if (action === "select-service") {
     state.service = services.find((service) => service.id === control.dataset.id);
+    state.date = null;
     state.time = null;
+    state.availableSlots = [];
+    state.maxStepReached = Math.min(state.maxStepReached, 2);
     goToStep(2);
   } else if (action === "select-date") {
     state.date = fromIsoDate(control.dataset.date);
+    state.maxStepReached = 2;
     try {
       await loadAvailability();
     } catch (error) {
@@ -386,7 +378,6 @@ elements.panel.addEventListener("click", async (event) => {
       showAlert("Horários indisponíveis", error.message, true);
     }
     renderDateTimeStep();
-    updateSummary();
   } else if (action === "select-time") {
     state.time = control.dataset.time;
     goToStep(3);
@@ -449,20 +440,12 @@ elements.progress.addEventListener("click", (event) => {
   goToStep(Number(control.dataset.step));
 });
 
-elements.previous.addEventListener("click", () => goToStep(state.currentStep - 1));
 elements.closeAlert.addEventListener("click", () => elements.alert.classList.remove("is-visible"));
 elements.closeSlotConflict.addEventListener("click", closeSlotConflict);
 elements.chooseAnotherSlot.addEventListener("click", closeSlotConflict);
 elements.slotConflictDialog.addEventListener("click", (event) => {
   if (event.target === elements.slotConflictDialog) closeSlotConflict();
 });
-elements.summaryToggle.addEventListener("click", () => {
-  const open = elements.summaryToggle.getAttribute("aria-expanded") === "true";
-  elements.summaryToggle.setAttribute("aria-expanded", String(!open));
-  elements.summaryContent.classList.toggle("hidden", open);
-  elements.summaryChevron.textContent = open ? "expand_more" : "expand_less";
-});
-
 document.addEventListener("error", (event) => {
   const image = event.target;
   if (!(image instanceof HTMLImageElement) || !image.matches("[data-barber-photo]")) return;

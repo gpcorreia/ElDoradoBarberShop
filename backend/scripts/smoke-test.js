@@ -1,3 +1,5 @@
+require("dotenv").config({ path: require("path").resolve(__dirname, "../.env"), quiet: true });
+
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:1000";
 const checkDatabase = process.env.SMOKE_DATABASE === "true";
 

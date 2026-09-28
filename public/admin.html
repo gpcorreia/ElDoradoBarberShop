@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt" class="dark">
+<html lang="pt">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,71 +8,222 @@
     <link rel="icon" type="image/webp" href="/img/logo.webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@500;600&family=Material+Symbols+Outlined:wght@300&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/css/tailwind.generated.css" />
-    <link rel="stylesheet" href="/css/styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Material+Symbols+Outlined:wght@300;400&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/css/admin.css" />
     <script type="module" src="/js/admin.js"></script>
   </head>
-  <body class="min-h-screen bg-surface font-body text-cream antialiased">
-    <header class="border-b border-line bg-ink">
-      <div class="mx-auto flex max-w-[1280px] items-center justify-between px-5 py-5 sm:px-6">
-        <div class="flex items-center gap-3"><a href="/" class="flex" aria-label="ElDorado Barbershop — início"><img src="/img/logo.webp" alt="ElDorado Barbershop" class="h-12 w-12 object-contain drop-shadow-[0_3px_8px_rgba(233,193,118,0.2)]" /></a><div><p class="font-display text-base tracking-[0.14em] text-gold sm:text-lg">ELDORADO</p><p class="mt-1 text-[7px] tracking-[0.18em] text-muted">ADMINISTRAÇÃO</p></div></div>
-        <button id="logout" class="flex items-center gap-2 border border-line px-4 py-3 text-[9px] font-semibold tracking-[0.14em] text-muted transition hover:border-gold hover:text-gold"><span class="material-symbols-outlined text-base">logout</span>SAIR</button>
+  <body class="admin-shell">
+    <aside class="admin-sidebar">
+      <a class="sidebar-brand" href="/" aria-label="ElDorado Barbershop — início">
+        <span class="sidebar-logo"><img src="/img/logo.webp" alt="" /></span>
+        <span class="sidebar-brand-copy"><strong>ElDorado</strong><small>BARBERSHOP</small></span>
+      </a>
+
+      <div class="sidebar-business">
+        <span>BARBEARIA</span>
+        <strong>ElDorado</strong>
+        <small>Painel de administração</small>
       </div>
-    </header>
 
-    <main class="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 sm:py-12">
-      <div class="mb-8"><p class="text-[9px] font-semibold tracking-[0.24em] text-gold">PAINEL DE GESTÃO</p><h1 class="mt-3 font-display text-3xl sm:text-5xl">O controlo da casa</h1><p class="mt-3 max-w-2xl text-xs leading-5 text-muted sm:text-sm">Gere a equipa, liberta horários cancelados e apresenta os produtos disponíveis.</p></div>
-
-      <nav class="mb-7 grid grid-cols-3 border border-line bg-ink p-1" aria-label="Secções administrativas">
-        <button data-tab="bookings" class="admin-tab is-active px-2 py-3 text-[8px] font-bold tracking-[0.08em] sm:text-[10px] sm:tracking-[0.15em]">RESERVAS</button>
-        <button data-tab="barbers" class="admin-tab px-2 py-3 text-[8px] font-bold tracking-[0.08em] text-muted sm:text-[10px] sm:tracking-[0.15em]">BARBEIROS</button>
-        <button data-tab="products" class="admin-tab px-2 py-3 text-[8px] font-bold tracking-[0.08em] text-muted sm:text-[10px] sm:tracking-[0.15em]">PRODUTOS</button>
+      <nav class="admin-nav" aria-label="Secções administrativas">
+        <button type="button" data-tab="dashboard" class="admin-tab is-active"><span class="material-symbols-outlined">space_dashboard</span><span>Dashboard</span></button>
+        <button type="button" data-tab="reservations" class="admin-tab"><span class="material-symbols-outlined">event_note</span><span>Reservas</span></button>
+        <button type="button" data-tab="bookings" class="admin-tab"><span class="material-symbols-outlined">calendar_month</span><span>Agenda</span></button>
+        <button type="button" data-tab="barbers" class="admin-tab"><span class="material-symbols-outlined">groups</span><span>Barbeiros</span></button>
+        <button type="button" data-tab="products" class="admin-tab"><span class="material-symbols-outlined">inventory_2</span><span>Produtos</span></button>
       </nav>
 
-      <section data-panel="bookings" class="admin-panel border border-line bg-[#171616] p-5 sm:p-8">
-        <header class="mb-7"><p class="text-[9px] tracking-[0.2em] text-gold">AGENDA</p><h2 class="mt-2 font-display text-2xl sm:text-3xl">Reservas por barbeiro</h2><p class="mt-2 text-xs text-muted">Escolhe um barbeiro para consultar as reservas. As reservas futuras podem ser canceladas.</p></header>
-        <label class="block max-w-md"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">BARBEIRO</span><select id="booking-barber" class="admin-field w-full px-4 py-3 text-sm"><option value="">Seleciona um barbeiro</option></select></label>
-        <div id="bookings-list" class="mt-7"><p class="border border-dashed border-line p-6 text-center text-xs text-muted">Seleciona um barbeiro para veres a agenda.</p></div>
-      </section>
+      <div class="sidebar-footer">
+        <span class="status-line"><i></i> Sistema operacional</span>
+        <small id="sidebar-admin-email">Administração ElDorado</small>
+      </div>
+    </aside>
 
-      <section data-panel="barbers" class="admin-panel border border-line bg-[#171616] p-5 sm:p-8" hidden>
-        <div class="grid gap-8 lg:grid-cols-[1fr_360px]">
-          <form id="barber-form" class="space-y-5">
-            <header class="mb-7"><p class="text-[9px] tracking-[0.2em] text-gold">EQUIPA</p><h2 class="mt-2 font-display text-2xl sm:text-3xl">Adicionar barbeiro</h2></header>
-            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">NOME</span><input name="name" maxlength="100" class="admin-field w-full px-4 py-3 text-sm" required /></label>
-            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">FOTOGRAFIA</span><input data-image-input data-preview="barber-preview" name="image" type="file" accept="image/jpeg,image/png,image/webp" class="admin-field w-full text-xs" required /><small class="mt-2 block text-[9px] text-muted">JPG, PNG ou WebP · máximo 5 MB.</small></label>
-            <button class="bg-gold px-7 py-4 text-[10px] font-bold tracking-[0.17em] text-ink disabled:opacity-50" type="submit">CRIAR BARBEIRO</button>
-          </form>
-          <div class="border border-line bg-ink p-4"><p class="mb-3 text-[9px] tracking-[0.16em] text-muted">PRÉ-VISUALIZAÇÃO</p><div class="aspect-[4/5] overflow-hidden bg-panel"><img id="barber-preview" class="hidden h-full w-full object-cover" alt="Pré-visualização do barbeiro" /><div data-placeholder="barber-preview" class="flex h-full items-center justify-center text-muted"><span class="material-symbols-outlined text-5xl">person</span></div></div></div>
+    <div class="admin-workspace">
+      <header class="admin-topbar">
+        <div class="topbar-context"><span class="material-symbols-outlined">content_cut</span><span>Barbearia configurada</span></div>
+        <div class="topbar-actions">
+          <span class="status-line"><i></i> Operacional</span>
+          <button id="logout" class="icon-button logout-button" type="button" aria-label="Terminar sessão" title="Terminar sessão"><span class="material-symbols-outlined">logout</span></button>
         </div>
-      </section>
+      </header>
 
-      <section data-panel="products" class="admin-panel border border-line bg-[#171616] p-5 sm:p-8" hidden>
-        <div class="grid gap-8 lg:grid-cols-[1fr_360px]">
-          <form id="product-form" class="space-y-5">
-            <header class="mb-7"><p class="text-[9px] tracking-[0.2em] text-gold">CATÁLOGO</p><h2 class="mt-2 font-display text-2xl sm:text-3xl">Adicionar produto</h2></header>
-            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">NOME</span><input name="name" maxlength="100" class="admin-field w-full px-4 py-3 text-sm" required /></label>
-            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">CATEGORIA</span><select name="category" class="admin-field w-full px-4 py-3 text-sm" required><option value="">Seleciona uma categoria</option><option value="Styling">Styling</option><option value="Barba">Barba</option><option value="Cabelo">Cabelo</option><option value="Rosto">Rosto</option></select></label>
-            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">DESCRIÇÃO</span><textarea name="description" rows="4" maxlength="1000" class="admin-field w-full resize-y px-4 py-3 text-sm" required></textarea></label>
-            <label class="block max-w-xs"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">PREÇO (€)</span><input name="price" type="number" min="0" max="999999.99" step="0.01" class="admin-field w-full px-4 py-3 text-sm" required /></label>
-            <label class="block"><span class="mb-2 block text-[9px] font-semibold tracking-[0.14em] text-muted">IMAGEM</span><input data-image-input data-preview="product-preview" name="image" type="file" accept="image/jpeg,image/png,image/webp" class="admin-field w-full text-xs" required /><small class="mt-2 block text-[9px] text-muted">JPG, PNG ou WebP · máximo 5 MB.</small></label>
-            <button class="bg-gold px-7 py-4 text-[10px] font-bold tracking-[0.17em] text-ink disabled:opacity-50" type="submit">PUBLICAR PRODUTO</button>
-          </form>
-          <div class="border border-line bg-ink p-4"><p class="mb-3 text-[9px] tracking-[0.16em] text-muted">PRÉ-VISUALIZAÇÃO</p><div class="aspect-square overflow-hidden bg-panel"><img id="product-preview" class="hidden h-full w-full object-cover" alt="Pré-visualização do produto" /><div data-placeholder="product-preview" class="flex h-full items-center justify-center text-muted"><span class="material-symbols-outlined text-5xl">inventory_2</span></div></div></div>
+      <main class="admin-content">
+        <section data-panel="dashboard" class="admin-panel">
+          <header class="page-heading">
+            <div><p class="eyebrow">VISÃO GERAL</p><h1>O pulso da barbearia</h1><p>Acompanha a operação, a procura e o desempenho da equipa num só lugar.</p></div>
+            <div class="period-badge"><span class="material-symbols-outlined">calendar_today</span><span id="dashboard-period">Mês atual</span></div>
+          </header>
+
+          <div class="metric-grid" aria-live="polite">
+            <article class="metric-card metric-card-accent">
+              <div class="metric-label"><span>RESERVAS HOJE</span><span class="material-symbols-outlined">event_available</span></div>
+              <div class="metric-value"><strong id="metric-today-bookings">—</strong><small>marcações</small></div>
+              <p id="metric-today-note">A carregar operação de hoje…</p>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label"><span>FATURAÇÃO DO MÊS</span><span class="material-symbols-outlined">payments</span></div>
+              <div class="metric-value"><strong id="metric-month-revenue">—</strong></div>
+              <p id="metric-month-note">Valor das reservas confirmadas</p>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label"><span>OCUPAÇÃO HOJE</span><span class="material-symbols-outlined">speed</span></div>
+              <div class="metric-value"><strong id="metric-occupancy">—</strong><small>%</small></div>
+              <div class="metric-progress"><i id="metric-occupancy-bar"></i></div>
+              <p>Tempo reservado face à capacidade da equipa</p>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label"><span>CANCELAMENTOS</span><span class="material-symbols-outlined">event_busy</span></div>
+              <div class="metric-value"><strong id="metric-cancellations">—</strong><small>%</small></div>
+              <p id="metric-cancellations-note">Taxa no mês atual</p>
+            </article>
+          </div>
+
+          <div class="dashboard-main-grid dashboard-chart-grid">
+            <article class="surface-card chart-card">
+              <header class="card-heading">
+                <div><span>RITMO DO MÊS</span><h2>Marcações por dia</h2></div>
+                <span class="soft-badge" id="month-bookings-badge">— reservas</span>
+              </header>
+              <div id="bookings-chart" class="bookings-chart"><p class="empty-state">A carregar atividade…</p></div>
+            </article>
+          </div>
+
+          <div class="dashboard-secondary-grid">
+            <article class="surface-card">
+              <header class="card-heading"><div><span>PROCURA</span><h2>Serviços mais pedidos</h2></div></header>
+              <div id="service-ranking" class="ranking-list"><p class="empty-state">A carregar serviços…</p></div>
+            </article>
+            <article class="surface-card">
+              <header class="card-heading"><div><span>EQUIPA</span><h2>Faturação por barbeiro</h2></div></header>
+              <div id="barber-ranking" class="ranking-list"><p class="empty-state">A carregar equipa…</p></div>
+            </article>
+          </div>
+        </section>
+
+        <section data-panel="reservations" class="admin-panel" hidden>
+          <header class="page-heading reservations-heading">
+            <div><p class="eyebrow">GESTÃO DE RESERVAS</p><h1>Reservas</h1><p>Consulta, cria e gere todas as marcações confirmadas da barbearia.</p></div>
+            <button type="button" class="new-booking-button reservations-primary-action" data-open-manual-booking><span class="material-symbols-outlined">add</span>NOVA RESERVA</button>
+          </header>
+
+          <article class="surface-card reservations-card">
+            <header class="reservations-toolbar">
+              <label class="reservation-search"><span class="material-symbols-outlined">search</span><input id="reservation-search" type="search" placeholder="Pesquisar cliente, serviço ou contacto" /></label>
+              <label class="compact-select"><span>BARBEIRO</span><select id="reservation-barber"><option value="">Todos</option></select></label>
+              <label class="reservation-date-filter"><span>DATA</span><input id="reservation-date" type="date" /></label>
+              <button id="clear-reservation-filters" type="button" class="filter-clear-button">LIMPAR</button>
+            </header>
+            <div class="reservations-list-heading"><div><h2>Próximas marcações</h2><span class="soft-badge" id="reservations-count">0 reservas</span></div><small>Próximos 60 dias</small></div>
+            <div id="reservations-list" class="reservations-list" aria-live="polite"><p class="empty-state">A carregar reservas…</p></div>
+          </article>
+        </section>
+
+        <section data-panel="bookings" class="admin-panel" hidden>
+          <header class="page-heading agenda-heading">
+            <div>
+              <p class="eyebrow">OPERAÇÃO DIÁRIA</p><h1>Calendário de serviço</h1><p>Ocupação por período e distribuição das reservas pela equipa.</p>
+              <strong id="agenda-readable-date" class="readable-date"></strong>
+            </div>
+            <div class="date-navigation">
+              <button type="button" class="icon-button" data-day-action="previous" aria-label="Dia anterior"><span class="material-symbols-outlined">chevron_left</span></button>
+              <label class="date-picker"><span class="material-symbols-outlined">calendar_month</span><input id="agenda-date" type="date" /></label>
+              <button type="button" class="icon-button icon-button-strong" data-day-action="next" aria-label="Dia seguinte"><span class="material-symbols-outlined">chevron_right</span></button>
+              <button type="button" class="today-button" data-day-action="today">HOJE</button>
+            </div>
+          </header>
+
+          <div class="operation-grid">
+            <article class="operation-card">
+              <div class="operation-label"><span>PERÍODO DO DIA</span><span class="soft-badge">09:00–12:00</span></div>
+              <h2>Manhã</h2>
+              <div class="operation-value"><strong id="morning-bookings">0</strong><small>reservas</small><b id="morning-occupancy">0%</b></div>
+              <div class="operation-progress"><i id="morning-progress"></i></div>
+              <footer><span id="morning-hours">0h reservadas</span><span id="morning-peak">Sem pico</span></footer>
+            </article>
+            <article class="operation-card operation-card-active">
+              <div class="operation-label"><span>PERÍODO DO DIA</span><span class="soft-badge">14:00–19:00</span></div>
+              <h2>Tarde</h2>
+              <div class="operation-value"><strong id="afternoon-bookings">0</strong><small>reservas</small><b id="afternoon-occupancy">0%</b></div>
+              <div class="operation-progress"><i id="afternoon-progress"></i></div>
+              <footer><span id="afternoon-hours">0h reservadas</span><span id="afternoon-peak">Sem pico</span></footer>
+            </article>
+            <article class="operation-card cadence-card">
+              <div class="operation-label"><span>OPERAÇÃO</span><span class="material-symbols-outlined">speed</span></div>
+              <div class="cadence-value"><strong id="daily-bookings">0</strong><small>reservas no dia</small></div>
+              <p><b id="active-barbers">0 barbeiros</b> com agenda disponível.</p>
+              <footer><span id="daily-hours">0h ocupadas</span><span>8h por profissional</span></footer>
+            </article>
+          </div>
+
+          <article class="surface-card schedule-card">
+            <header class="schedule-heading">
+              <div><h2>Grelha de ocupação</h2><span class="soft-badge" id="schedule-team-count">Equipa</span></div>
+              <label class="compact-select"><span>FILTRAR</span><select id="booking-barber"><option value="">Todos os barbeiros</option></select></label>
+            </header>
+            <div id="bookings-list" class="schedule-wrapper"><p class="empty-state">A carregar agenda…</p></div>
+            <footer class="schedule-footer"><span class="material-symbols-outlined">schedule</span> Horário: 09:00–12:00 e 14:00–19:00 · Intervalos de entrada de 10 minutos</footer>
+          </article>
+        </section>
+
+        <section data-panel="barbers" class="admin-panel" hidden>
+          <header class="page-heading"><div><p class="eyebrow">EQUIPA</p><h1>Gestão de barbeiros</h1><p>Adiciona profissionais e prepara a agenda para receber marcações.</p></div></header>
+          <article class="surface-card management-card">
+            <form id="barber-form" class="management-form">
+              <div class="card-heading"><div><span>NOVO PROFISSIONAL</span><h2>Adicionar barbeiro</h2></div></div>
+              <label class="field-label"><span>NOME</span><input name="name" maxlength="100" class="admin-field" placeholder="Nome do profissional" required /></label>
+              <label class="field-label"><span>FOTOGRAFIA</span><input data-image-input data-preview="barber-preview" name="image" type="file" accept="image/jpeg,image/png,image/webp" class="admin-field file-field" required /><small>JPG, PNG ou WebP · máximo 5 MB.</small></label>
+              <button class="primary-button" type="submit">CRIAR BARBEIRO <span class="material-symbols-outlined">arrow_forward</span></button>
+            </form>
+            <div class="preview-card"><span>PRÉ-VISUALIZAÇÃO</span><div class="barber-preview-frame"><img id="barber-preview" class="is-hidden" alt="Pré-visualização do barbeiro" /><div data-placeholder="barber-preview" class="preview-placeholder"><span class="material-symbols-outlined">person</span></div></div></div>
+          </article>
+        </section>
+
+        <section data-panel="products" class="admin-panel" hidden>
+          <header class="page-heading"><div><p class="eyebrow">CATÁLOGO</p><h1>Produtos da casa</h1><p>Publica e mantém atualizada a seleção disponível na barbearia.</p></div></header>
+          <article class="surface-card management-card">
+            <form id="product-form" class="management-form">
+              <div class="card-heading"><div><span>NOVO PRODUTO</span><h2>Adicionar ao catálogo</h2></div></div>
+              <div class="field-grid">
+                <label class="field-label"><span>NOME</span><input name="name" maxlength="100" class="admin-field" required /></label>
+                <label class="field-label"><span>CATEGORIA</span><select name="category" class="admin-field" required><option value="">Seleciona</option><option value="Styling">Styling</option><option value="Barba">Barba</option><option value="Cabelo">Cabelo</option><option value="Rosto">Rosto</option></select></label>
+              </div>
+              <label class="field-label"><span>DESCRIÇÃO</span><textarea name="description" rows="4" maxlength="1000" class="admin-field" required></textarea></label>
+              <label class="field-label short-field"><span>PREÇO (€)</span><input name="price" type="number" min="0" max="999999.99" step="0.01" class="admin-field" required /></label>
+              <label class="field-label"><span>IMAGEM</span><input data-image-input data-preview="product-preview" name="image" type="file" accept="image/jpeg,image/png,image/webp" class="admin-field file-field" required /><small>JPG, PNG ou WebP · máximo 5 MB.</small></label>
+              <button class="primary-button" type="submit">PUBLICAR PRODUTO <span class="material-symbols-outlined">arrow_forward</span></button>
+            </form>
+            <div class="preview-card"><span>PRÉ-VISUALIZAÇÃO</span><div class="product-preview-frame"><img id="product-preview" class="is-hidden" alt="Pré-visualização do produto" /><div data-placeholder="product-preview" class="preview-placeholder"><span class="material-symbols-outlined">inventory_2</span></div></div></div>
+          </article>
+          <article class="surface-card published-card">
+            <header class="card-heading"><div><span>PUBLICADOS</span><h2>Produtos na loja</h2></div></header>
+            <div id="admin-products-list" class="product-list" aria-live="polite"><p class="empty-state">A carregar produtos…</p></div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <div id="admin-message" class="admin-message" role="status"><span id="admin-message-icon" class="material-symbols-outlined">check_circle</span><div><strong id="admin-message-title"></strong><p id="admin-message-text"></p></div></div>
+    <dialog id="booking-detail-dialog" class="booking-detail-dialog"><div id="booking-detail"></div></dialog>
+    <dialog id="manual-booking-dialog" class="booking-detail-dialog manual-booking-dialog">
+      <form id="manual-booking-form" class="manual-booking-form">
+        <button type="button" data-close-manual-booking class="icon-button booking-dialog-close" aria-label="Fechar"><span class="material-symbols-outlined">close</span></button>
+        <p class="eyebrow">RESERVAS</p>
+        <h3>Nova reserva</h3>
+        <p class="dialog-intro">Regista uma marcação recebida presencialmente ou por telefone.</p>
+        <div class="manual-form-grid">
+          <label class="field-label"><span>BARBEIRO</span><select name="barber_id" class="admin-field" required><option value="">Seleciona</option></select></label>
+          <label class="field-label"><span>SERVIÇO</span><select name="service_id" class="admin-field" required><option value="">Seleciona</option></select></label>
+          <label class="field-label"><span>DATA</span><input name="day" type="date" class="admin-field" required /></label>
+          <label class="field-label"><span>HORÁRIO</span><select name="time" class="admin-field" required disabled><option value="">Escolhe os dados acima</option></select></label>
         </div>
-        <div class="mt-10 border-t border-line pt-8">
-          <header class="mb-5"><p class="text-[9px] tracking-[0.2em] text-gold">PUBLICADOS</p><h3 class="mt-2 font-display text-2xl">Produtos na loja</h3><p class="mt-2 text-xs text-muted">Remove os produtos esgotados ou descontinuados da montra pública.</p></header>
-          <div id="admin-products-list" class="space-y-3" aria-live="polite"><p class="border border-dashed border-line p-6 text-center text-xs text-muted">A carregar produtos…</p></div>
+        <label class="field-label"><span>NOME DO CLIENTE</span><input name="customer_name" maxlength="100" class="admin-field" autocomplete="name" required /></label>
+        <div class="manual-form-grid">
+          <label class="field-label"><span>TELEFONE</span><input name="customer_phone" type="tel" maxlength="20" class="admin-field" autocomplete="tel" required /></label>
+          <label class="field-label"><span>EMAIL</span><input name="customer_email" type="email" maxlength="150" class="admin-field" autocomplete="email" required /></label>
         </div>
-      </section>
-    </main>
-
-    <div id="admin-message" class="admin-message fixed inset-x-4 bottom-4 z-50 mx-auto max-w-lg border border-line bg-panel p-4 shadow-2xl" role="status"><p id="admin-message-title" class="font-display text-lg"></p><p id="admin-message-text" class="mt-1 text-xs text-muted"></p></div>
-
-    <dialog id="booking-detail-dialog" class="booking-detail-dialog m-auto w-[calc(100%-2rem)] max-w-lg border border-line bg-panel p-0 text-cream">
-      <div id="booking-detail"></div>
+        <button class="primary-button manual-submit" type="submit">CONFIRMAR RESERVA <span class="material-symbols-outlined">check</span></button>
+      </form>
     </dialog>
   </body>
 </html>

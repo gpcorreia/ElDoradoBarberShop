@@ -4,7 +4,7 @@ import { rateLimit } from "express-rate-limit";
 import {handleBooking, handleGetBarbers, handleGetServices, searchAppointmentsAvailable} from "../controllers/bookingController";
 import { handleBarberCreation } from "../controllers/barbersControllers";
 import { getAdminSession, loginAdmin, logoutAdmin } from "../controllers/authController";
-import { handleCancelBooking, handleGetBarberBookings } from "../controllers/adminBookingsController";
+import { handleCancelBooking, handleGetAdminBookings, handleGetBarberBookings, handleGetDashboardOverview } from "../controllers/adminBookingsController";
 import { handleCreateProduct, handleDeactivateProduct, handleGetProducts } from "../controllers/productsController";
 import { protectAdmin } from "../middleware/auth.middleware";
 import { requireSameOrigin } from "../middleware/security.middleware";
@@ -56,7 +56,7 @@ const bookingLimiter = rateLimit({
 router.use(apiLimiter);
 router.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
 
-router.post("/booking", bookingLimiter, handleBooking);
+router.post("/booking", requireSameOrigin, bookingLimiter, handleBooking);
 
 router.get("/appointments/:barber_id/:day", searchAppointmentsAvailable);
 
@@ -67,6 +67,9 @@ router.get("/products", handleGetProducts);
 router.post("/admin/login", requireSameOrigin, loginLimiter, loginAdmin);
 router.get("/admin/session", protectAdmin, getAdminSession);
 router.post("/admin/logout", protectAdmin, requireSameOrigin, logoutAdmin);
+router.get("/admin/dashboard", protectAdmin, handleGetDashboardOverview);
+router.get("/admin/bookings", protectAdmin, handleGetAdminBookings);
+router.post("/admin/booking", protectAdmin, requireSameOrigin, handleBooking);
 router.post("/admin/barbers", protectAdmin, requireSameOrigin, upload.single("image"), handleBarberCreation);
 router.get("/admin/barbers/:barberId/bookings", protectAdmin, handleGetBarberBookings);
 router.patch("/admin/bookings/:bookingId/cancel", protectAdmin, requireSameOrigin, handleCancelBooking);

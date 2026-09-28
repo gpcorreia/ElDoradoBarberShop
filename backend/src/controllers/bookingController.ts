@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
-import { createBooking, getAppointmentsAvailable, getServiceDuration, getServices } from "../repositories/bookingRepository";
-import { barberExists, getBarbers } from "../repositories/barbers";
+import { createBooking, getAppointmentsAvailable, getServiceDuration, getServiceName, getServices } from "../repositories/bookingRepository";
+import { barberExists, getBarberName, getBarbers } from "../repositories/barbers";
 import { BookingRequestBody } from "../types/data";
 import { isEmail, isIsoDate, isLocalTimestamp, isPhone, isUuid, lisbonLocalTimestamp } from "../config/validation";
+import { sendBookingConfirmation } from "../services/emailService";
 
 function isSunday(day: string): boolean {
   return new Date(`${day}T12:00:00Z`).getUTCDay() === 0;
@@ -44,6 +45,18 @@ export async function handleBooking(req: Request, res: Response) {
   }
   if (result === "error") {
     return res.status(500).json({ message: "Não foi possível concluir a marcação. Tenta novamente." });
+  }
+
+  try {
+    const [barberName, serviceName] = await Promise.all([
+      getBarberName(bookingInfo.barber_id),
+      getServiceName(bookingInfo.service_id),
+    ]);
+
+    if (!barberName || !serviceName) throw new Error("Não foi possível obter os dados da marcação.");
+    await sendBookingConfirmation(bookingInfo, { barberName, serviceName });
+  } catch (error) {
+    console.error("A marcação foi criada, mas o email de confirmação ao cliente falhou:", error);
   }
 
   return res.status(201).json({ message: "Marcação criada com sucesso." });

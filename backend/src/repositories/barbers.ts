@@ -44,6 +44,17 @@ export async function barberExists(barberId: string): Promise<boolean> {
   return Boolean(data);
 }
 
+export async function getBarberName(barberId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("barbers")
+    .select("name")
+    .eq("id", barberId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return typeof data?.name === "string" ? data.name : null;
+}
+
 
 export async function createBarber(
   barber: Pick<Barber, "name">,

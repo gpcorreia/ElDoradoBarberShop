@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { ADMIN_COOKIE_NAME } from "../config/constants";
+import { env } from "../config/env";
 
 export type AdminRequest = Request & {
   admin?: { email: string; role: "admin" };
@@ -17,14 +18,13 @@ function readCookie(req: Request, name: string): string | null {
 
 function verifyAdminToken(req: AdminRequest): { email: string; role: "admin" } | null {
   const token = readCookie(req, ADMIN_COOKIE_NAME);
-  const secret = process.env.JWT_SECRET_KEY;
-  if (!token || !secret) return null;
+  if (!token) return null;
 
   try {
-    const payload = jwt.verify(token, secret, {
+    const payload = jwt.verify(token, env.jwtSecret, {
       algorithms: ["HS256"],
-      issuer: "eldorado-backend",
-      audience: "eldorado-admin",
+      issuer: env.jwtIssuer,
+      audience: env.jwtAudience,
     }) as jwt.JwtPayload & { email?: string; role?: string };
 
     if (payload.role !== "admin" || !payload.email || payload.sub !== "admin") return null;

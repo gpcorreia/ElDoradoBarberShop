@@ -1,33 +1,27 @@
 import { renderBookingCalendar } from "/components/admin-calendar.js";
 
-const tabs = document.querySelectorAll("[data-tab]");
-const panels = document.querySelectorAll("[data-panel]");
+const tabs = [...document.querySelectorAll("[data-tab]")];
+const panels = [...document.querySelectorAll("[data-panel]")];
 const barberSelect = document.querySelector("#booking-barber");
 const bookingsList = document.querySelector("#bookings-list");
+const agendaDate = document.querySelector("#agenda-date");
 const bookingDialog = document.querySelector("#booking-detail-dialog");
 const bookingDetail = document.querySelector("#booking-detail");
+const manualBookingDialog = document.querySelector("#manual-booking-dialog");
+const manualBookingForm = document.querySelector("#manual-booking-form");
+const reservationsList = document.querySelector("#reservations-list");
+const reservationSearch = document.querySelector("#reservation-search");
+const reservationBarber = document.querySelector("#reservation-barber");
+const reservationDate = document.querySelector("#reservation-date");
 const adminProductsList = document.querySelector("#admin-products-list");
 const messageBox = document.querySelector("#admin-message");
 let messageTimer;
+let barbers = [];
+let services = [];
 let currentBookings = [];
-
-function startOfWeek(value) {
-  const date = new Date(value);
-  date.setHours(0, 0, 0, 0);
-  const day = date.getDay();
-  date.setDate(date.getDate() + (day === 0 ? -6 : 1 - day));
-  return date;
-}
-
-function initialWeek() {
-  const today = new Date();
-  const monday = startOfWeek(today);
-  if (today.getDay() === 0) monday.setDate(monday.getDate() + 7);
-  return monday;
-}
-
-let visibleWeek = initialWeek();
-const firstAvailableWeek = initialWeek();
+let reservations = [];
+let visibleDay = new Date();
+visibleDay.setHours(0, 0, 0, 0);
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -38,15 +32,54 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function relation(value) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function getServiceName(booking) {
+  return relation(booking.services)?.name;
+}
+
+function getBarberName(booking) {
+  return relation(booking.barbers)?.name;
+}
+
 function formatPrice(value) {
-  return new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(Number(value));
+  return new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(Number(value || 0));
+}
+
+function formatShortPrice(value) {
+  return new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(value || 0));
+}
+
+function toIsoDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function toLocalTimestamp(date) {
+  return `${toIsoDate(date)}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+}
+
+function localDateFromIso(value) {
+  const [year, month, day] = String(value).slice(0, 10).split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatBookingDate(value) {
+  return new Intl.DateTimeFormat("pt-PT", {
+    weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+  }).format(new Date(value));
 }
 
 function showMessage(title, text, error = false) {
   clearTimeout(messageTimer);
   document.querySelector("#admin-message-title").textContent = title;
   document.querySelector("#admin-message-text").textContent = text;
-  messageBox.classList.toggle("border-red-800", error);
+  document.querySelector("#admin-message-icon").textContent = error ? "error" : "check_circle";
+  messageBox.classList.toggle("is-error", error);
   messageBox.classList.add("is-visible");
   messageTimer = setTimeout(() => messageBox.classList.remove("is-visible"), 4500);
 }
@@ -57,7 +90,6 @@ async function api(url, options = {}) {
     headers: { Accept: "application/json", ...options.headers },
   });
   const result = await response.json().catch(() => ({}));
-
   if (response.status === 401) {
     window.location.replace("/admin/login");
     throw new Error("Sessão expirada.");
@@ -70,101 +102,339 @@ function activateTab(name) {
   tabs.forEach((tab) => {
     const active = tab.dataset.tab === name;
     tab.classList.toggle("is-active", active);
-    tab.classList.toggle("text-muted", !active);
+    tab.setAttribute("aria-current", active ? "page" : "false");
   });
   panels.forEach((panel) => { panel.hidden = panel.dataset.panel !== name; });
+  if (name === "bookings" && barbers.length) loadBookings();
+  if (name === "reservations" && barbers.length) loadReservations();
+}
+
+function setProgress(element, percentage) {
+  element.style.width = `${Math.max(0, Math.min(100, Number(percentage) || 0))}%`;
 }
 
 async function loadBarbers() {
-  const response = await fetch("/api/barbers", { headers: { Accept: "application/json" } });
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(result.message || "Não foi possível carregar os barbeiros.");
-  barberSelect.innerHTML = '<option value="">Seleciona um barbeiro</option>' + result.barbers
+  const result = await api("/api/barbers");
+  barbers = result.barbers ?? [];
+  barberSelect.innerHTML = '<option value="">Todos os barbeiros</option>' + barbers
     .map((barber) => `<option value="${escapeHtml(barber.id)}">${escapeHtml(barber.name)}</option>`)
+    .join("");
+  reservationBarber.innerHTML = '<option value="">Todos</option>' + barbers
+    .map((barber) => `<option value="${escapeHtml(barber.id)}">${escapeHtml(barber.name)}</option>`)
+    .join("");
+  manualBookingForm.elements.barber_id.innerHTML = '<option value="">Seleciona</option>' + barbers
+    .map((barber) => `<option value="${escapeHtml(barber.id)}">${escapeHtml(barber.name)}</option>`)
+    .join("");
+  document.querySelector("#schedule-team-count").textContent = `${barbers.length} ${barbers.length === 1 ? "barbeiro" : "barbeiros"}`;
+  return barbers;
+}
+
+async function loadServices() {
+  const result = await api("/api/services");
+  services = result.services ?? [];
+  manualBookingForm.elements.service_id.innerHTML = '<option value="">Seleciona</option>' + services
+    .map((service) => `<option value="${escapeHtml(service.id)}">${escapeHtml(service.name)} · ${escapeHtml(formatPrice(service.price))}</option>`)
     .join("");
 }
 
-function formatBookingDate(value) {
-  return new Intl.DateTimeFormat("pt-PT", {
-    weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-  }).format(new Date(value));
+function renderDashboardChart(daily) {
+  const chart = document.querySelector("#bookings-chart");
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const allDays = [];
+  for (const cursor = new Date(firstDay); cursor <= today; cursor.setDate(cursor.getDate() + 1)) {
+    const date = toIsoDate(cursor);
+    const data = daily.find((item) => item.date === date);
+    allDays.push({ date, bookings: data?.bookings ?? 0 });
+  }
+  const visibleDays = allDays.slice(-14);
+  const max = Math.max(1, ...visibleDays.map((item) => item.bookings));
+  if (!visibleDays.length) {
+    chart.innerHTML = '<p class="empty-state">Ainda não existem dados neste mês.</p>';
+    return;
+  }
+
+  chart.innerHTML = visibleDays.map((item) => {
+    const date = localDateFromIso(item.date);
+    const label = new Intl.DateTimeFormat("pt-PT", { day: "2-digit" }).format(date);
+    const isToday = item.date === toIsoDate(today);
+    return `<div class="chart-column ${isToday ? "is-today" : ""}"><b>${item.bookings || ""}</b><div class="chart-bar-track"><i class="chart-bar" data-chart-height="${(item.bookings / max) * 100}"></i></div><small>${label}</small></div>`;
+  }).join("");
+  chart.querySelectorAll("[data-chart-height]").forEach((bar) => {
+    bar.style.height = `${Math.max(2, Number(bar.dataset.chartHeight))}%`;
+  });
 }
 
-function toLocalTimestamp(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  const seconds = String(date.getSeconds()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+function renderRanking(containerSelector, items, kind) {
+  const container = document.querySelector(containerSelector);
+  if (!items.length) {
+    container.innerHTML = `<p class="empty-state">Ainda não existem ${kind === "service" ? "serviços reservados" : "dados da equipa"} neste mês.</p>`;
+    return;
+  }
+  const max = Math.max(1, ...items.map((item) => item.bookings));
+  container.innerHTML = items.slice(0, 5).map((item) => `
+    <div class="ranking-item">
+      <div><div class="ranking-copy"><span>${escapeHtml(item.name)}</span><small>${item.bookings} ${item.bookings === 1 ? "reserva" : "reservas"}</small></div></div>
+      <strong>${escapeHtml(formatShortPrice(item.revenue))}</strong>
+      <div class="ranking-track"><i data-ranking-width="${(item.bookings / max) * 100}"></i></div>
+    </div>`).join("");
+  container.querySelectorAll("[data-ranking-width]").forEach((bar) => setProgress(bar, bar.dataset.rankingWidth));
 }
 
-function getServiceName(booking) {
-  return Array.isArray(booking.services) ? booking.services[0]?.name : booking.services?.name;
+async function loadDashboard() {
+  try {
+    const { overview } = await api("/api/admin/dashboard");
+    const { summary } = overview;
+    const monthName = new Intl.DateTimeFormat("pt-PT", { month: "long", year: "numeric" }).format(new Date());
+    document.querySelector("#dashboard-period").textContent = monthName[0].toUpperCase() + monthName.slice(1);
+    document.querySelector("#metric-today-bookings").textContent = summary.todayBookings;
+    document.querySelector("#metric-today-note").textContent = `${formatPrice(summary.todayRevenue)} de faturação confirmada hoje`;
+    document.querySelector("#metric-month-revenue").textContent = formatShortPrice(summary.monthRevenue);
+    document.querySelector("#metric-month-note").textContent = `${summary.monthBookings} reservas ativas no mês`;
+    document.querySelector("#metric-occupancy").textContent = summary.occupancyToday;
+    setProgress(document.querySelector("#metric-occupancy-bar"), summary.occupancyToday);
+    document.querySelector("#metric-cancellations").textContent = summary.cancellationRate;
+    document.querySelector("#metric-cancellations-note").textContent = summary.cancellationRate <= 10 ? "Dentro de um intervalo saudável" : "Merece acompanhamento";
+    document.querySelector("#month-bookings-badge").textContent = `${summary.monthBookings} reservas`;
+    renderDashboardChart(overview.daily);
+    renderRanking("#service-ranking", overview.services, "service");
+    renderRanking("#barber-ranking", overview.barbers, "barber");
+  } catch (error) {
+    document.querySelector("#bookings-chart").innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
+    showMessage("Dashboard indisponível", error.message, true);
+  }
+}
+
+function renderReservations() {
+  const search = reservationSearch.value.trim().toLocaleLowerCase("pt-PT");
+  const barberId = reservationBarber.value;
+  const day = reservationDate.value;
+  const filtered = reservations.filter((booking) => {
+    const searchable = [booking.customer_name, booking.customer_email, booking.customer_phone, getServiceName(booking), getBarberName(booking)]
+      .join(" ")
+      .toLocaleLowerCase("pt-PT");
+    return (!search || searchable.includes(search))
+      && (!barberId || booking.barber_id === barberId)
+      && (!day || String(booking.starts_at).startsWith(day));
+  });
+
+  document.querySelector("#reservations-count").textContent = `${filtered.length} ${filtered.length === 1 ? "reserva" : "reservas"}`;
+  if (!filtered.length) {
+    reservationsList.innerHTML = '<p class="empty-state reservations-empty">Não existem reservas para os filtros selecionados.</p>';
+    return;
+  }
+
+  const dayFormatter = new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "short" });
+  const weekdayFormatter = new Intl.DateTimeFormat("pt-PT", { weekday: "short" });
+  const timeFormatter = new Intl.DateTimeFormat("pt-PT", { hour: "2-digit", minute: "2-digit" });
+  reservationsList.innerHTML = filtered.map((booking) => {
+    const date = new Date(booking.starts_at);
+    return `<article class="reservation-row">
+      <div class="reservation-day"><strong>${escapeHtml(dayFormatter.format(date).replace(".", ""))}</strong><span>${escapeHtml(weekdayFormatter.format(date).replace(".", ""))}</span></div>
+      <div class="reservation-client"><strong>${escapeHtml(booking.customer_name)}</strong><span>${escapeHtml(getServiceName(booking) || "Serviço")} · ${escapeHtml(getBarberName(booking) || "Barbeiro")}</span></div>
+      <div class="reservation-contact"><span class="material-symbols-outlined">call</span><span>${escapeHtml(booking.customer_phone || "Sem telefone")}</span></div>
+      <div class="reservation-time"><strong>${escapeHtml(timeFormatter.format(date))}</strong><span>Confirmada</span></div>
+      <div class="reservation-actions"><button type="button" data-view-reservation="${escapeHtml(booking.id)}" class="reservation-action">DETALHES</button><button type="button" data-cancel-reservation="${escapeHtml(booking.id)}" class="reservation-action reservation-action-danger">CANCELAR</button></div>
+    </article>`;
+  }).join("");
+}
+
+async function loadReservations() {
+  reservationsList.innerHTML = '<p class="empty-state reservations-empty">A carregar reservas…</p>';
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 61);
+  try {
+    const query = new URLSearchParams({ start: toLocalTimestamp(start), end: toLocalTimestamp(end) });
+    const result = await api(`/api/admin/bookings?${query}`);
+    reservations = result.bookings ?? [];
+    renderReservations();
+  } catch (error) {
+    reservationsList.innerHTML = `<p class="empty-state reservations-empty">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function bookingMinutesWithin(booking, periodStart, periodEnd) {
+  const startText = String(booking.starts_at).slice(11, 16);
+  const endText = String(booking.ends_at).slice(11, 16);
+  const [startHour, startMinute] = startText.split(":").map(Number);
+  const [endHour, endMinute] = endText.split(":").map(Number);
+  const start = startHour * 60 + startMinute;
+  const end = endHour * 60 + endMinute;
+  return Math.max(0, Math.min(end, periodEnd) - Math.max(start, periodStart));
+}
+
+function peakLabel(bookings) {
+  if (!bookings.length) return "Sem pico";
+  const counts = new Map();
+  for (const booking of bookings) {
+    const hour = String(booking.starts_at).slice(11, 13);
+    counts.set(hour, (counts.get(hour) ?? 0) + 1);
+  }
+  const peak = [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  return `Pico: ${peak}:00`;
+}
+
+function formatHours(minutes) {
+  const hours = minutes / 60;
+  return `${new Intl.NumberFormat("pt-PT", { maximumFractionDigits: 1 }).format(hours)}h reservadas`;
+}
+
+function updateOperationSummary(visibleBarbers, bookings) {
+  const periods = [
+    { name: "morning", start: 9 * 60, end: 12 * 60 },
+    { name: "afternoon", start: 14 * 60, end: 19 * 60 },
+  ];
+  for (const period of periods) {
+    const periodBookings = bookings.filter((booking) => bookingMinutesWithin(booking, period.start, period.end) > 0);
+    const bookedMinutes = periodBookings.reduce((total, booking) => total + bookingMinutesWithin(booking, period.start, period.end), 0);
+    const capacity = visibleBarbers.length * (period.end - period.start);
+    const occupancy = capacity ? Math.min(100, Math.round((bookedMinutes / capacity) * 100)) : 0;
+    document.querySelector(`#${period.name}-bookings`).textContent = periodBookings.length;
+    document.querySelector(`#${period.name}-occupancy`).textContent = `${occupancy}%`;
+    document.querySelector(`#${period.name}-hours`).textContent = formatHours(bookedMinutes);
+    document.querySelector(`#${period.name}-peak`).textContent = peakLabel(periodBookings);
+    setProgress(document.querySelector(`#${period.name}-progress`), occupancy);
+  }
+  const totalMinutes = bookings.reduce((total, booking) => total + bookingMinutesWithin(booking, 9 * 60, 19 * 60), 0);
+  document.querySelector("#daily-bookings").textContent = bookings.length;
+  document.querySelector("#active-barbers").textContent = `${visibleBarbers.length} ${visibleBarbers.length === 1 ? "barbeiro" : "barbeiros"}`;
+  document.querySelector("#daily-hours").textContent = formatHours(totalMinutes).replace(" reservadas", " ocupadas");
+}
+
+function updateAgendaHeading() {
+  agendaDate.value = toIsoDate(visibleDay);
+  document.querySelector("#agenda-readable-date").textContent = new Intl.DateTimeFormat("pt-PT", {
+    weekday: "long", day: "2-digit", month: "long", year: "numeric",
+  }).format(visibleDay);
+}
+
+async function loadBookings() {
+  updateAgendaHeading();
+  const selectedId = barberSelect.value;
+  const visibleBarbers = selectedId ? barbers.filter((barber) => barber.id === selectedId) : barbers;
+  if (!visibleBarbers.length) {
+    currentBookings = [];
+    renderBookingCalendar(bookingsList, { barbers: [], bookings: [] });
+    updateOperationSummary([], []);
+    return;
+  }
+
+  bookingsList.innerHTML = '<p class="empty-state">A carregar a agenda da equipa…</p>';
+  const start = new Date(visibleDay);
+  const end = new Date(visibleDay);
+  end.setDate(end.getDate() + 1);
+  const query = new URLSearchParams({ start: toLocalTimestamp(start), end: toLocalTimestamp(end) });
+  try {
+    const results = await Promise.all(visibleBarbers.map((barber) =>
+      api(`/api/admin/barbers/${encodeURIComponent(barber.id)}/bookings?${query}`)
+    ));
+    currentBookings = results.flatMap((result) => result.bookings ?? []);
+    renderBookingCalendar(bookingsList, { barbers: visibleBarbers, bookings: currentBookings });
+    updateOperationSummary(visibleBarbers, currentBookings);
+  } catch (error) {
+    bookingsList.innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
+  }
 }
 
 function openBookingDetails(booking) {
+  const canCancel = booking.status === "confirmed" && String(booking.starts_at) > toLocalTimestamp(new Date());
   bookingDetail.innerHTML = `
-    <article class="relative p-6 sm:p-8">
-      <button type="button" data-close-booking class="absolute right-3 top-3 flex h-10 w-10 items-center justify-center text-muted hover:text-gold" aria-label="Fechar"><span class="material-symbols-outlined">close</span></button>
-      <p class="text-[8px] font-semibold tracking-[0.2em] text-gold">DETALHES DA RESERVA</p>
-      <h3 class="mt-3 pr-10 font-display text-3xl">${escapeHtml(booking.customer_name)}</h3>
-      <dl class="mt-7 space-y-4 border-y border-line py-5 text-xs">
-        <div class="flex justify-between gap-5"><dt class="text-muted">Serviço</dt><dd class="text-right">${escapeHtml(getServiceName(booking) || "Serviço")}</dd></div>
-        <div class="flex justify-between gap-5"><dt class="text-muted">Data e hora</dt><dd class="text-right">${escapeHtml(formatBookingDate(booking.starts_at))}</dd></div>
-        <div class="flex justify-between gap-5"><dt class="text-muted">Telefone</dt><dd class="text-right">${escapeHtml(booking.customer_phone || "—")}</dd></div>
-        <div class="flex justify-between gap-5"><dt class="text-muted">Email</dt><dd class="break-all text-right">${escapeHtml(booking.customer_email || "—")}</dd></div>
+    <article class="booking-dialog-content">
+      <button type="button" data-close-booking class="icon-button booking-dialog-close" aria-label="Fechar"><span class="material-symbols-outlined">close</span></button>
+      <p class="eyebrow">DETALHES DA RESERVA</p>
+      <h3>${escapeHtml(booking.customer_name)}</h3>
+      <dl class="booking-details">
+        <div><dt>Serviço</dt><dd>${escapeHtml(getServiceName(booking) || "Serviço")}</dd></div>
+        <div><dt>Barbeiro</dt><dd>${escapeHtml(getBarberName(booking) || barbers.find((item) => item.id === booking.barber_id)?.name || "—")}</dd></div>
+        <div><dt>Data e hora</dt><dd>${escapeHtml(formatBookingDate(booking.starts_at))}</dd></div>
+        <div><dt>Telefone</dt><dd>${escapeHtml(booking.customer_phone || "—")}</dd></div>
+        <div><dt>Email</dt><dd>${escapeHtml(booking.customer_email || "—")}</dd></div>
       </dl>
-      <button type="button" data-cancel-booking="${escapeHtml(booking.id)}" class="mt-6 w-full border border-red-900 px-5 py-4 text-[9px] font-bold tracking-[0.14em] text-red-300 transition hover:bg-red-950">CANCELAR RESERVA</button>
+      ${canCancel ? `<button type="button" data-cancel-booking="${escapeHtml(booking.id)}" class="danger-button booking-cancel">CANCELAR RESERVA</button>` : ""}
     </article>`;
   bookingDialog.showModal();
 }
 
-async function loadBookings() {
-  const barberId = barberSelect.value;
-  if (!barberId) {
-    bookingsList.innerHTML = '<p class="border border-dashed border-line p-6 text-center text-xs text-muted">Seleciona um barbeiro para veres a agenda.</p>';
+async function loadManualAvailability() {
+  const barberId = manualBookingForm.elements.barber_id.value;
+  const serviceId = manualBookingForm.elements.service_id.value;
+  const day = manualBookingForm.elements.day.value;
+  const timeSelect = manualBookingForm.elements.time;
+
+  timeSelect.disabled = true;
+  if (!barberId || !serviceId || !day) {
+    timeSelect.innerHTML = '<option value="">Escolhe os dados acima</option>';
+    return;
+  }
+  if (localDateFromIso(day).getDay() === 0) {
+    timeSelect.innerHTML = '<option value="">Encerrado ao domingo</option>';
     return;
   }
 
-  bookingsList.innerHTML = '<p class="border border-line p-10 text-center text-xs text-muted">A carregar agenda…</p>';
+  timeSelect.innerHTML = '<option value="">A carregar horários…</option>';
   try {
-    const end = new Date(visibleWeek);
-    end.setDate(end.getDate() + 6);
-    const now = new Date();
-    const start = visibleWeek.getTime() === firstAvailableWeek.getTime() && now > visibleWeek ? now : visibleWeek;
-    const query = new URLSearchParams({ start: toLocalTimestamp(start), end: toLocalTimestamp(end) });
-    const result = await api(`/api/admin/barbers/${encodeURIComponent(barberId)}/bookings?${query}`);
-    currentBookings = result.bookings;
-    renderBookingCalendar(bookingsList, {
-      weekStart: visibleWeek,
-      bookings: currentBookings,
-      canGoPrevious: visibleWeek.getTime() > firstAvailableWeek.getTime(),
-    });
+    const query = new URLSearchParams({ service_id: serviceId });
+    const result = await api(`/api/appointments/${encodeURIComponent(barberId)}/${encodeURIComponent(day)}?${query}`);
+    if (!result.appointments?.length) {
+      timeSelect.innerHTML = '<option value="">Sem horários disponíveis</option>';
+      return;
+    }
+    timeSelect.innerHTML = '<option value="">Seleciona</option>' + result.appointments
+      .map((time) => `<option value="${escapeHtml(time)}">${escapeHtml(time)}</option>`)
+      .join("");
+    timeSelect.disabled = false;
   } catch (error) {
-    bookingsList.innerHTML = `<p class="border border-red-900 p-6 text-center text-xs text-red-200">${escapeHtml(error.message)}</p>`;
+    timeSelect.innerHTML = '<option value="">Não foi possível carregar</option>';
+    showMessage("Horários indisponíveis", error.message, true);
+  }
+}
+
+function openManualBooking() {
+  manualBookingForm.reset();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const chosenDay = visibleDay >= today ? visibleDay : today;
+  manualBookingForm.elements.day.min = toIsoDate(today);
+  manualBookingForm.elements.day.value = toIsoDate(chosenDay);
+  const activeTab = document.querySelector("[data-tab].is-active")?.dataset.tab;
+  manualBookingForm.elements.barber_id.value = activeTab === "reservations" ? reservationBarber.value : barberSelect.value;
+  manualBookingForm.elements.time.innerHTML = '<option value="">Escolhe barbeiro e serviço</option>';
+  manualBookingForm.elements.time.disabled = true;
+  manualBookingDialog.showModal();
+}
+
+async function cancelReservation(bookingId, button) {
+  if (!confirm("Tens a certeza de que queres cancelar esta reserva? O horário ficará novamente disponível.")) return;
+  if (button) button.disabled = true;
+  try {
+    const result = await api(`/api/admin/bookings/${encodeURIComponent(bookingId)}/cancel`, { method: "PATCH" });
+    bookingDialog.close();
+    showMessage("Reserva cancelada", result.message);
+    await Promise.all([loadBookings(), loadReservations(), loadDashboard()]);
+  } catch (error) {
+    showMessage("Não foi possível cancelar", error.message, true);
+    if (button) button.disabled = false;
   }
 }
 
 async function loadAdminProducts() {
-  adminProductsList.innerHTML = '<p class="border border-dashed border-line p-6 text-center text-xs text-muted">A carregar produtos…</p>';
-
+  adminProductsList.innerHTML = '<p class="empty-state">A carregar produtos…</p>';
   try {
     const { products } = await api("/api/products");
     if (!products.length) {
-      adminProductsList.innerHTML = '<p class="border border-dashed border-line p-6 text-center text-xs text-muted">Não existem produtos publicados.</p>';
+      adminProductsList.innerHTML = '<p class="empty-state">Não existem produtos publicados.</p>';
       return;
     }
-
     adminProductsList.innerHTML = products.map((product) => `
-      <article class="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-4 border border-line bg-ink p-3 sm:grid-cols-[64px_minmax(0,1fr)_auto]">
-        <img src="${escapeHtml(product.image_url)}" alt="" class="h-14 w-14 bg-[#f2efe8] object-cover sm:h-16 sm:w-16" />
-        <div class="min-w-0"><p class="truncate font-display text-lg">${escapeHtml(product.name)}</p><p class="mt-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-gold">${escapeHtml(product.category)} · ${escapeHtml(formatPrice(product.price))}</p></div>
-        <button type="button" data-remove-product="${escapeHtml(product.id)}" data-product-name="${escapeHtml(product.name)}" class="col-span-2 border border-red-900 px-4 py-3 text-[8px] font-bold tracking-[0.12em] text-red-300 transition hover:bg-red-950 sm:col-span-1">REMOVER DA LOJA</button>
+      <article class="product-row">
+        <img src="${escapeHtml(product.image_url)}" alt="" />
+        <div class="product-copy"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category)} · ${escapeHtml(formatPrice(product.price))}</small></div>
+        <button type="button" data-remove-product="${escapeHtml(product.id)}" data-product-name="${escapeHtml(product.name)}" class="danger-button">REMOVER DA LOJA</button>
       </article>`).join("");
   } catch (error) {
-    adminProductsList.innerHTML = `<p class="border border-red-900 p-6 text-center text-xs text-red-200">${escapeHtml(error.message)}</p>`;
+    adminProductsList.innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
   }
 }
 
@@ -175,15 +445,14 @@ async function submitMultipart(form, endpoint, successTitle) {
     showMessage("Imagem inválida", "Escolhe uma imagem JPG, PNG ou WebP com até 5 MB.", true);
     return;
   }
-
   button.disabled = true;
   try {
     const result = await api(endpoint, { method: "POST", body: new FormData(form) });
     showMessage(successTitle, result.message);
     form.reset();
     const previewId = form.elements.image.dataset.preview;
-    document.querySelector(`#${previewId}`).classList.add("hidden");
-    document.querySelector(`[data-placeholder='${previewId}']`).classList.remove("hidden");
+    document.querySelector(`#${previewId}`).classList.add("is-hidden");
+    document.querySelector(`[data-placeholder='${previewId}']`).classList.remove("is-hidden");
     return result;
   } finally {
     button.disabled = false;
@@ -191,25 +460,45 @@ async function submitMultipart(form, endpoint, successTitle) {
 }
 
 tabs.forEach((tab) => tab.addEventListener("click", () => activateTab(tab.dataset.tab)));
-barberSelect.addEventListener("change", () => {
-  visibleWeek = initialWeek();
+document.querySelectorAll("[data-go-tab]").forEach((button) => button.addEventListener("click", () => activateTab(button.dataset.goTab)));
+document.querySelectorAll("[data-day-action]").forEach((button) => button.addEventListener("click", () => {
+  if (button.dataset.dayAction === "today") visibleDay = new Date();
+  else visibleDay.setDate(visibleDay.getDate() + (button.dataset.dayAction === "next" ? 1 : -1));
+  visibleDay.setHours(0, 0, 0, 0);
+  loadBookings();
+}));
+agendaDate.addEventListener("change", () => {
+  if (!agendaDate.value) return;
+  visibleDay = localDateFromIso(agendaDate.value);
   loadBookings();
 });
+barberSelect.addEventListener("change", loadBookings);
 
-bookingsList.addEventListener("click", async (event) => {
-  const navigation = event.target.closest("[data-calendar-action]");
-  if (navigation) {
-    if (navigation.dataset.calendarAction === "next") visibleWeek.setDate(visibleWeek.getDate() + 7);
-    if (navigation.dataset.calendarAction === "previous" && visibleWeek > firstAvailableWeek) visibleWeek.setDate(visibleWeek.getDate() - 7);
-    if (navigation.dataset.calendarAction === "today") visibleWeek = initialWeek();
-    await loadBookings();
-    return;
-  }
-
+bookingsList.addEventListener("click", (event) => {
   const eventCard = event.target.closest("[data-open-booking]");
   if (!eventCard) return;
   const booking = currentBookings.find((item) => item.id === eventCard.dataset.openBooking);
   if (booking) openBookingDetails(booking);
+});
+
+reservationSearch.addEventListener("input", renderReservations);
+reservationBarber.addEventListener("change", renderReservations);
+reservationDate.addEventListener("change", renderReservations);
+document.querySelector("#clear-reservation-filters").addEventListener("click", () => {
+  reservationSearch.value = "";
+  reservationBarber.value = "";
+  reservationDate.value = "";
+  renderReservations();
+});
+reservationsList.addEventListener("click", (event) => {
+  const viewButton = event.target.closest("[data-view-reservation]");
+  if (viewButton) {
+    const booking = reservations.find((entry) => entry.id === viewButton.dataset.viewReservation);
+    if (booking) openBookingDetails(booking);
+    return;
+  }
+  const cancelButton = event.target.closest("[data-cancel-reservation]");
+  if (cancelButton) cancelReservation(cancelButton.dataset.cancelReservation, cancelButton);
 });
 
 bookingDetail.addEventListener("click", async (event) => {
@@ -217,30 +506,62 @@ bookingDetail.addEventListener("click", async (event) => {
     bookingDialog.close();
     return;
   }
-
   const button = event.target.closest("[data-cancel-booking]");
-  if (!button || !confirm("Tens a certeza de que queres cancelar esta reserva? O horário ficará novamente disponível.")) return;
-  button.disabled = true;
-  try {
-    const result = await api(`/api/admin/bookings/${encodeURIComponent(button.dataset.cancelBooking)}/cancel`, { method: "PATCH" });
-    bookingDialog.close();
-    showMessage("Reserva cancelada", result.message);
-    await loadBookings();
-  } catch (error) {
-    showMessage("Não foi possível cancelar", error.message, true);
-    button.disabled = false;
-  }
+  if (button) cancelReservation(button.dataset.cancelBooking, button);
 });
 
 bookingDialog.addEventListener("click", (event) => {
   if (event.target === bookingDialog) bookingDialog.close();
 });
 
+document.querySelector("[data-open-manual-booking]").addEventListener("click", openManualBooking);
+document.querySelector("[data-close-manual-booking]").addEventListener("click", () => manualBookingDialog.close());
+manualBookingDialog.addEventListener("click", (event) => {
+  if (event.target === manualBookingDialog) manualBookingDialog.close();
+});
+["barber_id", "service_id", "day"].forEach((name) => {
+  manualBookingForm.elements[name].addEventListener("change", loadManualAvailability);
+});
+manualBookingForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const submitButton = manualBookingForm.querySelector("button[type='submit']");
+  const day = manualBookingForm.elements.day.value;
+  const time = manualBookingForm.elements.time.value;
+  if (!day || !time) return;
+
+  submitButton.disabled = true;
+  try {
+    const result = await api("/api/admin/booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        barber_id: manualBookingForm.elements.barber_id.value,
+        service_id: manualBookingForm.elements.service_id.value,
+        customer_name: manualBookingForm.elements.customer_name.value.trim(),
+        customer_phone: manualBookingForm.elements.customer_phone.value.trim(),
+        customer_email: manualBookingForm.elements.customer_email.value.trim(),
+        starts_at: `${day}T${time}:00`,
+      }),
+    });
+    visibleDay = localDateFromIso(day);
+    manualBookingDialog.close();
+    showMessage("Reserva confirmada", result.message);
+    await Promise.all([loadBookings(), loadReservations(), loadDashboard()]);
+  } catch (error) {
+    showMessage("Não foi possível reservar", error.message, true);
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
 document.querySelector("#barber-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
-    await submitMultipart(event.currentTarget, "/api/admin/barbers", "Barbeiro criado");
-    await loadBarbers();
+    const result = await submitMultipart(event.currentTarget, "/api/admin/barbers", "Barbeiro criado");
+    if (result) {
+      await loadBarbers();
+      await loadDashboard();
+    }
   } catch (error) { showMessage("Não foi possível criar", error.message, true); }
 });
 
@@ -249,17 +570,13 @@ document.querySelector("#product-form").addEventListener("submit", async (event)
   try {
     const result = await submitMultipart(event.currentTarget, "/api/admin/products", "Produto publicado");
     if (result) await loadAdminProducts();
-  }
-  catch (error) { showMessage("Não foi possível publicar", error.message, true); }
+  } catch (error) { showMessage("Não foi possível publicar", error.message, true); }
 });
 
 adminProductsList.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-remove-product]");
   if (!button) return;
-
-  const productName = button.dataset.productName;
-  if (!confirm(`Remover “${productName}” da loja? O produto deixará de aparecer no site.`)) return;
-
+  if (!confirm(`Remover “${button.dataset.productName}” da loja? O produto deixará de aparecer no site.`)) return;
   button.disabled = true;
   try {
     const result = await api(`/api/admin/products/${encodeURIComponent(button.dataset.removeProduct)}`, { method: "DELETE" });
@@ -277,19 +594,26 @@ document.querySelectorAll("[data-image-input]").forEach((input) => {
     if (!file) return;
     const preview = document.querySelector(`#${input.dataset.preview}`);
     preview.src = URL.createObjectURL(file);
-    preview.classList.remove("hidden");
-    document.querySelector(`[data-placeholder='${input.dataset.preview}']`).classList.add("hidden");
+    preview.classList.remove("is-hidden");
+    document.querySelector(`[data-placeholder='${input.dataset.preview}']`).classList.add("is-hidden");
   });
 });
 
 document.querySelector("#logout").addEventListener("click", async () => {
-  try {
-    await api("/api/admin/logout", { method: "POST" });
-  } finally {
-    window.location.replace("/admin/login");
-  }
+  try { await api("/api/admin/logout", { method: "POST" }); }
+  finally { window.location.replace("/admin/login"); }
 });
 
+updateAgendaHeading();
+const requestedTab = new URLSearchParams(window.location.search).get("tab");
+if (window.location.pathname === "/admin/publish") activateTab("products");
+else if (requestedTab && tabs.some((tab) => tab.dataset.tab === requestedTab)) activateTab(requestedTab);
+
 api("/api/admin/session")
-  .then(() => Promise.all([loadBarbers(), loadAdminProducts()]))
+  .then(async (session) => {
+    if (session.admin?.email) document.querySelector("#sidebar-admin-email").textContent = session.admin.email;
+    await Promise.all([loadBarbers(), loadServices(), loadAdminProducts(), loadDashboard()]);
+    if (document.querySelector("[data-tab].is-active")?.dataset.tab === "bookings") await loadBookings();
+    if (document.querySelector("[data-tab].is-active")?.dataset.tab === "reservations") await loadReservations();
+  })
   .catch((error) => showMessage("Erro", error.message, true));
