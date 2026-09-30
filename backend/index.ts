@@ -53,7 +53,9 @@ if (servePages) {
     etag: true,
     maxAge: env.isProduction ? "1h" : 0,
     setHeaders: (res, filePath) => {
-      if (filePath.endsWith(".html")) res.setHeader("Cache-Control", "no-cache");
+      if (filePath.endsWith(".html") || filePath.endsWith(".js") || filePath.endsWith(".css")) {
+        res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+      }
     },
   }));
 

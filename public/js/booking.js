@@ -18,6 +18,9 @@ const API_CONFIG = {
 const FALLBACK_BARBER_PHOTO = "/img/barber-placeholder.svg";
 let barbers = [];
 let services = [];
+let availabilityRequestSequence = 0;
+const availabilityCache = new Map();
+const AVAILABILITY_CACHE_MS = 15 * 1000;
 
 const steps = ["BARBEIRO", "SERVIÇO", "DATA E HORA", "DADOS", "CONFIRMAR"];
 
@@ -30,6 +33,7 @@ const state = {
   time: null,
   dateOffset: 0,
   availableSlots: [],
+  availabilityLoading: false,
   customer: { name: "", phone: "", email: "" },
   completed: false
 };
@@ -109,15 +113,59 @@ function normalizePhotoUrl(photoUrl) {
   return FALLBACK_BARBER_PHOTO;
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
-  const result = await response.json().catch(() => ({}));
+function wait(milliseconds) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
 
-  if (!response.ok) {
-    throw new Error(result.message ?? `Pedido falhou com o estado ${response.status}.`);
+async function fetchJson(url, { attempts = 2, timeoutMs = 12000 } = {}) {
+  let lastError;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        headers: { Accept: "application/json" },
+        signal: controller.signal
+      });
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        const error = new Error("O servidor devolveu uma resposta temporariamente inválida.");
+        error.status = 502;
+        throw error;
+      }
+
+      if (response.ok) return result;
+
+      const error = new Error(result.message ?? `Pedido falhou com o estado ${response.status}.`);
+      error.status = response.status;
+      lastError = error;
+
+      const retryable = response.status === 429 || response.status >= 500;
+      if (!retryable || attempt === attempts - 1) throw error;
+    } catch (error) {
+      lastError = error;
+      const retryable = error.name === "AbortError" || error instanceof TypeError || error.status === 429 || error.status >= 500;
+      if (!retryable || attempt === attempts - 1) {
+        if (error.name === "AbortError") {
+          throw new Error("O servidor está a demorar mais do que o esperado. Tenta novamente dentro de alguns segundos.");
+        }
+        if (error instanceof TypeError) {
+          throw new Error("Não foi possível contactar o servidor. Verifica a ligação e tenta novamente.");
+        }
+        throw error;
+      }
+    } finally {
+      window.clearTimeout(timeout);
+    }
+
+    await wait(350 * (attempt + 1));
   }
 
-  return result;
+  throw lastError;
 }
 
 async function loadCatalog() {
@@ -205,9 +253,14 @@ function renderDateTimeStep() {
     disabled: date.getDay() === 0
   })).join("");
 
-  const times = state.date
-    ? state.availableSlots.map((time) => timeButton(time, state.time === time)).join("")
-    : '<p class="col-span-full py-6 text-center text-xs text-muted">Escolhe primeiro uma data.</p>';
+  let times = '<p class="col-span-full py-6 text-center text-xs text-muted">Escolhe primeiro uma data.</p>';
+  if (state.date && state.availabilityLoading) {
+    times = '<p class="col-span-full flex items-center justify-center gap-2 py-6 text-xs text-muted"><span class="material-symbols-outlined animate-spin text-lg text-gold">progress_activity</span>A procurar horários…</p>';
+  } else if (state.date && state.availableSlots.length) {
+    times = state.availableSlots.map((time) => timeButton(time, state.time === time)).join("");
+  } else if (state.date) {
+    times = '<p class="col-span-full py-6 text-center text-xs text-muted">Não existem horários disponíveis para este dia.</p>';
+  }
 
   elements.panel.innerHTML = `
     ${stepHeading("PASSO 3", "Quando queres visitar-nos?", "Escolhe a data e, de seguida, um dos horários disponíveis.")}
@@ -290,14 +343,37 @@ function goToStep(step) {
   elements.panel.scrollTop = 0;
 }
 
-async function loadAvailability() {
+async function loadAvailability({ force = false } = {}) {
   state.time = null;
-  if (!state.date || !state.barber || !state.service) return;
+  if (!state.date || !state.barber || !state.service) return false;
 
   const date = toIsoDate(state.date);
+  const requestId = ++availabilityRequestSequence;
+  const cacheKey = `${state.barber.id}:${state.service.id}:${date}`;
+  const cached = availabilityCache.get(cacheKey);
+  state.availabilityLoading = true;
+
+  if (!force && cached && Date.now() - cached.createdAt < AVAILABILITY_CACHE_MS) {
+    state.availableSlots = cached.slots;
+    state.availabilityLoading = false;
+    return true;
+  }
+
   const query = new URLSearchParams({ service_id: state.service.id });
-  const result = await fetchJson(`${API_CONFIG.availabilityUrl}/${encodeURIComponent(state.barber.id)}/${date}?${query}`);
-  state.availableSlots = result.available_slots ?? result.appointments ?? [];
+  try {
+    const result = await fetchJson(`${API_CONFIG.availabilityUrl}/${encodeURIComponent(state.barber.id)}/${date}?${query}`, {
+      attempts: 2,
+      timeoutMs: 10000
+    });
+    if (requestId !== availabilityRequestSequence) return false;
+
+    const slots = result.available_slots ?? result.appointments ?? [];
+    state.availableSlots = slots;
+    availabilityCache.set(cacheKey, { slots, createdAt: Date.now() });
+    return true;
+  } finally {
+    if (requestId === availabilityRequestSequence) state.availabilityLoading = false;
+  }
 }
 
 function buildBookingPayload() {
@@ -378,24 +454,32 @@ elements.panel.addEventListener("click", async (event) => {
   if (action === "retry-catalog") {
     await initializeBooking();
   } else if (action === "select-barber") {
+    availabilityRequestSequence += 1;
     state.barber = barbers.find((barber) => barber.id === control.dataset.id);
     state.date = null;
     state.time = null;
     state.availableSlots = [];
+    state.availabilityLoading = false;
     state.maxStepReached = Math.min(state.maxStepReached, state.service ? 2 : 1);
     goToStep(1);
   } else if (action === "select-service") {
+    availabilityRequestSequence += 1;
     state.service = services.find((service) => service.id === control.dataset.id);
     state.date = null;
     state.time = null;
     state.availableSlots = [];
+    state.availabilityLoading = false;
     state.maxStepReached = Math.min(state.maxStepReached, 2);
     goToStep(2);
   } else if (action === "select-date") {
     state.date = fromIsoDate(control.dataset.date);
+    state.availableSlots = [];
+    state.availabilityLoading = true;
     state.maxStepReached = 2;
+    renderDateTimeStep();
     try {
-      await loadAvailability();
+      const applied = await loadAvailability();
+      if (!applied) return;
     } catch (error) {
       state.availableSlots = [];
       showAlert("Horários indisponíveis", error.message, true);
@@ -405,14 +489,18 @@ elements.panel.addEventListener("click", async (event) => {
     state.time = control.dataset.time;
     goToStep(3);
   } else if (action === "previous-dates") {
+    availabilityRequestSequence += 1;
     state.dateOffset = Math.max(0, state.dateOffset - 7);
     state.date = null;
     state.availableSlots = [];
+    state.availabilityLoading = false;
     renderDateTimeStep();
   } else if (action === "next-dates") {
+    availabilityRequestSequence += 1;
     state.dateOffset += 7;
     state.date = null;
     state.availableSlots = [];
+    state.availabilityLoading = false;
     renderDateTimeStep();
   } else if (action === "submit-booking") {
     if (!elements.panel.querySelector("[data-terms]")?.checked) {
@@ -428,7 +516,7 @@ elements.panel.addEventListener("click", async (event) => {
       if (error.status === 409) {
         const unavailableTime = state.time;
         try {
-          await loadAvailability();
+          await loadAvailability({ force: true });
         } catch {
           state.time = null;
           state.availableSlots = [];

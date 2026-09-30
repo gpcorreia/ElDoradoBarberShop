@@ -9,6 +9,9 @@ export type Barber = {
   photo_url: string;
 };
 
+const barberExistenceCache = new Map<string, number>();
+const BARBER_CACHE_MS = 5 * 60 * 1000;
+
 export async function getBarbers() {
   const { data, error } = await supabase
     .from("barbers")
@@ -20,7 +23,7 @@ export async function getBarbers() {
   }
 
 
-  return Promise.all(
+  const barbers = await Promise.all(
     (data ?? []).map(async (barber) => {
       if (!barber.photo_url || /^https?:\/\//i.test(barber.photo_url)) return barber;
 
@@ -31,9 +34,16 @@ export async function getBarbers() {
       return { ...barber, photo_url: signedImage?.signedUrl ?? null };
     })
   );
+
+  const expiresAt = Date.now() + BARBER_CACHE_MS;
+  for (const barber of barbers) barberExistenceCache.set(barber.id, expiresAt);
+  return barbers;
 }
 
 export async function barberExists(barberId: string): Promise<boolean> {
+  const cachedUntil = barberExistenceCache.get(barberId);
+  if (cachedUntil && cachedUntil > Date.now()) return true;
+
   const { data, error } = await supabase
     .from("barbers")
     .select("id")
@@ -41,7 +51,10 @@ export async function barberExists(barberId: string): Promise<boolean> {
     .maybeSingle();
 
   if (error) throw error;
-  return Boolean(data);
+  if (!data) return false;
+
+  barberExistenceCache.set(barberId, Date.now() + BARBER_CACHE_MS);
+  return true;
 }
 
 export async function getBarberName(barberId: string): Promise<string | null> {
@@ -74,5 +87,6 @@ export async function createBarber(
     throw new Error(`Erro ao criar o barbeiro: ${error?.message ?? "resposta vazia"}`);
   }
 
+  barberExistenceCache.set(data.id, Date.now() + BARBER_CACHE_MS);
   return data as Barber;
 }
