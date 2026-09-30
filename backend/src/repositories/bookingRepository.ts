@@ -3,12 +3,15 @@ import { SLOT_INTERVAL_MINUTES, WORKING_PERIODS } from "../config/constants";
 import { lisbonLocalTimestamp } from "../config/validation";
 import { BookingRequestBody } from "../types/data";
 
-type Appointment = {
+export type Appointment = {
   starts_at: string;
   ends_at: string;
 };
 
 export type CreateBookingResult = "created" | "conflict" | "invalid" | "error";
+
+const serviceDurationCache = new Map<string, { duration: number; expiresAt: number }>();
+const CATALOG_CACHE_MS = 5 * 60 * 1000;
 
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
@@ -42,6 +45,9 @@ function fitsWorkingPeriod(startMinutes: number, durationMinutes: number): boole
 }
 
 export async function getServiceDuration(serviceId: string): Promise<number | null> {
+  const cached = serviceDurationCache.get(serviceId);
+  if (cached && cached.expiresAt > Date.now()) return cached.duration;
+
   const { data, error } = await supabase
     .from("services")
     .select("duration_minutes")
@@ -50,7 +56,10 @@ export async function getServiceDuration(serviceId: string): Promise<number | nu
 
   if (error) throw error;
   const duration = Number(data?.duration_minutes);
-  return Number.isInteger(duration) && duration > 0 ? duration : null;
+  if (!Number.isInteger(duration) || duration <= 0) return null;
+
+  serviceDurationCache.set(serviceId, { duration, expiresAt: Date.now() + CATALOG_CACHE_MS });
+  return duration;
 }
 
 export async function getServiceName(serviceId: string): Promise<string | null> {
@@ -102,11 +111,7 @@ export async function createBooking(bookingInfo: BookingRequestBody): Promise<Cr
   return "error";
 }
 
-export async function getAppointmentsAvailable(
-  barberId: string,
-  day: string,
-  durationMinutes: number
-): Promise<string[]> {
+export async function getBookedAppointments(barberId: string, day: string): Promise<Appointment[]> {
   const dayStart = `${day}T00:00:00`;
   const nextDay = new Date(`${day}T00:00:00Z`);
   nextDay.setUTCDate(nextDay.getUTCDate() + 1);
@@ -122,7 +127,15 @@ export async function getAppointmentsAvailable(
 
   if (error) throw error;
 
-  const bookedSlots = ((appointments ?? []) as Appointment[]).map((appointment) => ({
+  return (appointments ?? []) as Appointment[];
+}
+
+export function calculateAvailableSlots(
+  appointments: Appointment[],
+  day: string,
+  durationMinutes: number
+): string[] {
+  const bookedSlots = appointments.map((appointment) => ({
     start: timeToMinutes(getTimeFromTimestamp(appointment.starts_at)),
     end: timeToMinutes(getTimeFromTimestamp(appointment.ends_at)),
   }));
@@ -149,6 +162,15 @@ export async function getAppointmentsAvailable(
   return availableSlots;
 }
 
+export async function getAppointmentsAvailable(
+  barberId: string,
+  day: string,
+  durationMinutes: number
+): Promise<string[]> {
+  const appointments = await getBookedAppointments(barberId, day);
+  return calculateAvailableSlots(appointments, day, durationMinutes);
+}
+
 export async function getServices() {
   const { data, error } = await supabase
     .from("services")
@@ -156,5 +178,15 @@ export async function getServices() {
     .order("created_at");
 
   if (error) throw error;
-  return data ?? [];
+
+  const services = data ?? [];
+  const expiresAt = Date.now() + CATALOG_CACHE_MS;
+  for (const service of services) {
+    const duration = Number(service.duration_minutes);
+    if (Number.isInteger(duration) && duration > 0) {
+      serviceDurationCache.set(service.id, { duration, expiresAt });
+    }
+  }
+
+  return services;
 }

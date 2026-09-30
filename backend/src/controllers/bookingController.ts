@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createBooking, getAppointmentsAvailable, getServiceDuration, getServiceName, getServices } from "../repositories/bookingRepository";
+import { calculateAvailableSlots, createBooking, getBookedAppointments, getServiceDuration, getServiceName, getServices } from "../repositories/bookingRepository";
 import { barberExists, getBarberName, getBarbers } from "../repositories/barbers";
 import { BookingRequestBody } from "../types/data";
 import { isEmail, isIsoDate, isLocalTimestamp, isPhone, isUuid, lisbonLocalTimestamp } from "../config/validation";
@@ -72,13 +72,15 @@ export async function searchAppointmentsAvailable(req: Request, res: Response) {
   }
 
   try {
-    const [duration, validBarber] = await Promise.all([
+    const [duration, validBarber, bookings] = await Promise.all([
       getServiceDuration(serviceId),
       barberExists(barberId),
+      getBookedAppointments(barberId, day),
     ]);
     if (!duration || !validBarber) return res.status(404).json({ message: "Barbeiro ou serviço não encontrado." });
 
-    const appointments = await getAppointmentsAvailable(barberId, day, duration);
+    const appointments = calculateAvailableSlots(bookings, day, duration);
+    res.set("Cache-Control", "private, no-store");
     return res.status(200).json({ appointments });
   } catch (error) {
     console.error("Erro ao procurar horários:", error);
