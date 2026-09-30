@@ -28,7 +28,7 @@ app.use(helmet({
       formAction: ["'self'"],
       frameAncestors: ["'none'"],
       imgSrc: ["'self'", "data:", "https:"],
-      mediaSrc: ["'self'"],
+      mediaSrc: ["'self'", "https://gyedyeygudoyvglpipua.supabase.co"],
       objectSrc: ["'none'"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "https://fonts.googleapis.com"],
