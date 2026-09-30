@@ -24,15 +24,6 @@ function getServiceName(booking) {
   return Array.isArray(booking.services) ? booking.services[0]?.name : booking.services?.name;
 }
 
-function initials(name) {
-  return String(name)
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
-
 function bookingCard(booking) {
   const start = timeToMinutes(booking.starts_at);
   const end = timeToMinutes(booking.ends_at);
@@ -59,13 +50,21 @@ export function renderBookingCalendar(container, { barbers, bookings }) {
     return;
   }
 
-  const hours = Array.from({ length: 10 }, (_, index) => 9 + index);
+  const timeMarkers = Array.from({ length: 20 }, (_, index) => {
+    const minutes = START_MINUTES + (index * 30);
+    const hour = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    return {
+      label: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+      isHour: minute === 0,
+    };
+  });
   container.innerHTML = `
     <div class="schedule-canvas">
       <div class="schedule-header">
         <div class="schedule-team-label">BARBEIRO</div>
         <div class="schedule-hours">
-          ${hours.map((hour) => `<span>${String(hour).padStart(2, "0")}:00</span>`).join("")}
+          ${timeMarkers.map((marker) => `<span class="${marker.isHour ? "is-hour" : ""}">${marker.label}</span>`).join("")}
         </div>
       </div>
       ${barbers.map((barber) => {
@@ -73,7 +72,6 @@ export function renderBookingCalendar(container, { barbers, bookings }) {
         return `
           <div class="schedule-row">
             <div class="schedule-barber">
-              <span class="schedule-avatar">${escapeHtml(initials(barber.name))}</span>
               <span><strong>${escapeHtml(barber.name)}</strong><small>${barberBookings.length} ${barberBookings.length === 1 ? "reserva" : "reservas"}</small></span>
             </div>
             <div class="schedule-timeline">
