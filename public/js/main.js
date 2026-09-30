@@ -69,6 +69,10 @@ function initializeNavigation() {
 
 function initializeReveals() {
   const revealElements = document.querySelectorAll(".reveal");
+  const hashId = window.location.hash.slice(1);
+  const hashTarget = hashId ? document.getElementById(hashId) : null;
+  hashTarget?.querySelectorAll(".reveal").forEach((element) => element.classList.add("is-visible"));
+
   if (!("IntersectionObserver" in window)) {
     revealElements.forEach((element) => element.classList.add("is-visible"));
     return;
@@ -82,8 +86,89 @@ function initializeReveals() {
     });
   }, { threshold: 0.12 });
 
-  revealElements.forEach((element) => observer.observe(element));
+  revealElements.forEach((element) => {
+    if (!element.classList.contains("is-visible")) observer.observe(element);
+  });
+}
+
+function initializeGalleryVideos() {
+  const previewVideos = [...document.querySelectorAll("#galeria video")];
+  if (!previewVideos.length) return;
+
+  previewVideos.forEach((video) => {
+    video.muted = true;
+    video.volume = 0;
+  });
+
+  if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const videoObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const video = entry.target;
+        if (entry.isIntersecting) video.play().catch(() => {});
+        else video.pause();
+      });
+    }, { threshold: 0.55 });
+
+    previewVideos.forEach((video) => videoObserver.observe(video));
+  }
+}
+
+function initializeHomeServicesCarousel() {
+  const carousel = document.querySelector(".home-services-grid");
+  const cards = carousel ? [...carousel.querySelectorAll("article")] : [];
+  const mobileViewport = window.matchMedia("(max-width: 639px)");
+  let animationFrame;
+
+  if (!carousel || cards.length < 2) return;
+
+  function updateActiveCard() {
+    if (!mobileViewport.matches) {
+      cards.forEach((card) => card.classList.remove("is-carousel-active"));
+      return;
+    }
+
+    const carouselBounds = carousel.getBoundingClientRect();
+    const carouselCenter = carouselBounds.left + (carouselBounds.width / 2);
+    let closestCard = cards[0];
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    cards.forEach((card) => {
+      const cardBounds = card.getBoundingClientRect();
+      const cardCenter = cardBounds.left + (cardBounds.width / 2);
+      const distance = Math.abs(cardCenter - carouselCenter);
+      if (distance < closestDistance) {
+        closestCard = card;
+        closestDistance = distance;
+      }
+    });
+
+    cards.forEach((card) => card.classList.toggle("is-carousel-active", card === closestCard));
+  }
+
+  function centerInitialCard() {
+    if (!mobileViewport.matches) {
+      carousel.scrollLeft = 0;
+      updateActiveCard();
+      return;
+    }
+
+    const initialCard = cards[1];
+    const carouselBounds = carousel.getBoundingClientRect();
+    const cardBounds = initialCard.getBoundingClientRect();
+    carousel.scrollLeft += cardBounds.left - carouselBounds.left - ((carouselBounds.width - cardBounds.width) / 2);
+    updateActiveCard();
+  }
+
+  carousel.addEventListener("scroll", () => {
+    cancelAnimationFrame(animationFrame);
+    animationFrame = requestAnimationFrame(updateActiveCard);
+  }, { passive: true });
+
+  mobileViewport.addEventListener("change", () => requestAnimationFrame(centerInitialCard));
+  requestAnimationFrame(centerInitialCard);
 }
 
 document.addEventListener("layout:ready", initializeNavigation, { once: true });
 initializeReveals();
+initializeGalleryVideos();
+initializeHomeServicesCarousel();
