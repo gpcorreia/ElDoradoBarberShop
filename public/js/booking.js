@@ -70,12 +70,30 @@ function formatPrice(price) {
 }
 
 function getServiceIcon(name) {
-  const normalizedName = name.toLowerCase();
+  const normalizedName = name.trim().toLowerCase();
 
+  if (normalizedName.includes("eldorado")) return "diamond";
+  if (normalizedName.includes("criança") || normalizedName.includes("crianca")) return "child_care";
+  if (normalizedName.includes("sobrancelha")) return "face_retouching_natural";
   if (normalizedName.includes("barba") && normalizedName.includes("corte")) return "styler";
   if (normalizedName.includes("barba")) return "face";
   if (normalizedName.includes("styling")) return "water_drop";
   return "content_cut";
+}
+
+const SERVICE_ORDER = [
+  "corte classico",
+  "corte + barba",
+  "barba",
+  "corte + barba + sobrancelha",
+  "servico eldorado",
+  "corte crianca"
+];
+
+function serviceOrder(name) {
+  const normalizedName = name.trim().toLocaleLowerCase("pt-PT").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const index = SERVICE_ORDER.indexOf(normalizedName);
+  return index === -1 ? SERVICE_ORDER.length : index;
 }
 
 function normalizePhotoUrl(photoUrl) {
@@ -120,12 +138,12 @@ async function loadCatalog() {
 
   services = servicesResult.services.map((service) => ({
     id: service.id,
-    name: service.name,
-    description: service.description || "Serviço profissional ElDorado.",
+    name: service.name.trim(),
+    description: service.description?.trim() || "Serviço profissional ElDorado.",
     price: Number(service.price),
     duration: Number(service.duration_minutes),
     icon: getServiceIcon(service.name)
-  }));
+  })).sort((first, second) => serviceOrder(first.name) - serviceOrder(second.name));
 
   if (!barbers.length || !services.length) {
     throw new Error("Ainda não existem barbeiros ou serviços disponíveis.");
@@ -166,7 +184,12 @@ function renderBarberStep() {
 function renderServiceStep() {
   elements.panel.innerHTML = `
     ${stepHeading("PASSO 2", "Escolhe o teu serviço", "Seleciona a experiência que procuras. O preço e a duração ficam sempre visíveis.")}
-    <div class="service-grid grid grid-cols-2 gap-3">${services.map((service) => serviceCard(service, state.service?.id === service.id, formatPrice(service.price))).join("")}</div>
+    <aside class="booking-friend-promo" aria-label="Promoção Traz um amigo">
+      <span class="material-symbols-outlined booking-friend-promo__icon" aria-hidden="true">group_add</span>
+      <span class="booking-friend-promo__copy"><strong>Traz um amigo</strong><small>Recebe 2,50 € de desconto por cada amigo que realizar um serviço contigo. Aplicado na barbearia.</small></span>
+      <span class="booking-friend-promo__value">−2,50 €<small>POR AMIGO</small></span>
+    </aside>
+    <div class="service-grid grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">${services.map((service) => serviceCard(service, state.service?.id === service.id, formatPrice(service.price))).join("")}</div>
   `;
 }
 

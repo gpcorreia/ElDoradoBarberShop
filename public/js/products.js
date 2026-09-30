@@ -1,7 +1,7 @@
 const grid = document.querySelector("#products-grid");
 const dialog = document.querySelector("#product-dialog");
 const detail = document.querySelector("#product-detail");
-const whatsappNumber = "351912345678";
+const whatsappNumber = "351913457840";
 let products = [];
 
 function escapeHtml(value) {

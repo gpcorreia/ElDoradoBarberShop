@@ -30,12 +30,14 @@ export function barberCard(barber, selected) {
 
 export function serviceCard(service, selected, formattedPrice) {
   return `
-    <button type="button" data-action="select-service" data-id="${escapeHtml(service.id)}" class="wizard-option service-option ${selected ? "is-selected" : ""} flex h-36 flex-col bg-panel p-4 text-left sm:h-40 sm:p-5">
+    <button type="button" data-action="select-service" data-id="${escapeHtml(service.id)}" class="wizard-option service-option ${selected ? "is-selected" : ""} bg-panel text-left">
       <span class="selection-check"><span class="material-symbols-outlined text-sm">check</span></span>
-      <span class="material-symbols-outlined text-2xl text-gold sm:text-3xl">${escapeHtml(service.icon)}</span>
-      <strong class="mt-2 block font-display text-sm font-medium uppercase leading-tight sm:text-lg">${escapeHtml(service.name)}</strong>
-      <span class="mt-1 hidden text-[10px] leading-4 text-muted sm:block">${escapeHtml(service.description)}</span>
-      <span class="mt-auto flex items-end justify-between gap-2 pt-2"><small class="text-[7px] tracking-[0.12em] text-muted">${service.duration} MIN</small><strong class="font-display text-lg font-medium text-gold sm:text-xl">${escapeHtml(formattedPrice)}</strong></span>
+      <span class="service-option__icon material-symbols-outlined">${escapeHtml(service.icon)}</span>
+      <span class="service-option__content">
+        <strong class="service-option__name">${escapeHtml(service.name)}</strong>
+        <span class="service-option__description">${escapeHtml(service.description)}</span>
+      </span>
+      <span class="service-option__meta"><small>${service.duration} MIN</small><strong>${escapeHtml(formattedPrice)}</strong></span>
     </button>
   `;
 }

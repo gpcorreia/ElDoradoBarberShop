@@ -10,7 +10,9 @@ async function loadFragment(selector, url) {
 function getCurrentPage() {
   const path = window.location.pathname.replace(/\/$/, "") || "/";
   if (path === "/produtos" || path.endsWith("/products.html")) return "products";
-  if (path === "/booking" || path.endsWith("/booking.html")) return "booking";
+  if (path === "/reserva" || path === "/booking" || path.endsWith("/booking.html")) return "booking";
+  if (path === "/servicos" || path.endsWith("/services.html")) return "services";
+  if (path === "/sobre-nos" || path.endsWith("/about.html")) return "about";
   if (path === "/politica-privacidade" || path.endsWith("/privacy.html")) return "privacy";
   if (path === "/termos-condicoes" || path.endsWith("/terms.html")) return "terms";
   return "home";

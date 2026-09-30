@@ -7,8 +7,19 @@
       name="description"
       content="ElDorado Barbershop — cortes, barba e styling num ambiente premium pensado para o cavalheiro moderno."
     />
-    <title>ElDorado Barbershop | Experiência Premium</title>
-    <link rel="icon" type="image/webp" href="/img/logo.webp" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_PT" />
+    <meta property="og:site_name" content="ElDorado Barbershop" />
+    <meta property="og:title" content="ElDorado Barbershop | Corte, barba e reservas" />
+    <meta property="og:description" content="Cortes, barba e styling num ambiente premium. Reserva online na ElDorado Barbershop." />
+    <meta property="og:url" content="https://www.eldoradobarbershop.com/" />
+    <meta property="og:image" content="https://www.eldoradobarbershop.com/img/logo.webp" />
+    <meta property="og:image:alt" content="Logótipo da ElDorado Barbershop" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>ElDorado Barbershop | Corte, barba e reservas</title>
+    <link rel="canonical" href="https://www.eldoradobarbershop.com/" />
+    <link rel="icon" type="image/png" href="/img/logo-email.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -21,6 +32,7 @@
     />
     <link rel="stylesheet" href="/css/tailwind.generated.css" />
     <link rel="stylesheet" href="/css/styles.css" />
+    <script src="/js/seo.js" defer></script>
     <script src="/js/layout.js" defer></script>
     <script src="/js/main.js" defer></script>
   </head>
@@ -29,17 +41,11 @@
 
     <main>
       <section id="inicio" class="relative flex h-[100svh] items-center overflow-hidden pt-20">
-        <video
-          class="absolute inset-0 h-full w-full object-cover"
-          autoplay
-          muted
-          loop
-          playsinline
-          preload="metadata"
-          aria-hidden="true"
-        >
-          <source src="/img/banner.webm" type="video/webm" />
-        </video>
+        <div class="hero-media absolute inset-0" aria-hidden="true">
+          <video class="hero-video" autoplay muted loop playsinline preload="metadata" tabindex="-1">
+            <source src="/img/b.webm" type="video/webm" />
+          </video>
+        </div>
         <div class="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/20 md:via-ink/70 md:to-transparent"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-ink/90 via-transparent to-transparent"></div>
 
@@ -53,8 +59,8 @@
               Mais que um corte. É sobre confiança, estilo e a melhor versão de ti. Redescobre a tua imagem num espaço pensado para o cavalheiro moderno.
             </p>
             <div class="mt-9 flex flex-col gap-3 sm:flex-row ">
-              <a href="/booking" class="flex items-center justify-center gap-3 bg-gold px-8 py-4 text-[11px] font-bold tracking-[0.15em] text-ink transition hover:bg-[#f3d08c] active:scale-[0.98] rounded-md">
-                MARCAR AGORA
+              <a href="/reserva" class="flex items-center justify-center gap-3 bg-gold px-8 py-4 text-[11px] font-bold tracking-[0.15em] text-ink transition hover:bg-[#f3d08c] active:scale-[0.98] rounded-md">
+                RESERVA AGORA
                 <span class="material-symbols-outlined text-xl">calendar_today</span>
               </a>
               <a href="#servicos" class="flex items-center justify-center gap-3 border border-line px-8 py-4 text-[11px] font-bold tracking-[0.15em] text-cream transition hover:border-gold hover:text-gold active:scale-[0.98] rounded-md">
@@ -74,49 +80,84 @@
           <span class="section-rule mx-auto mt-6"></span>
         </div>
 
-        <div class="mx-auto mt-14 grid max-w-[1280px] grid-cols-1 gap-5 px-5 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
-          <article class="reveal group flex min-h-[330px] flex-col items-center border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9 rounded-md">
+        <div class="home-services-grid mx-auto mt-14 grid max-w-[1280px] grid-cols-2 gap-3 px-5 sm:grid-cols-3 sm:px-6 lg:grid-cols-6 lg:gap-4">
+          <article class="reveal group flex min-h-[300px] flex-col items-center rounded-md border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9">
             <span class="material-symbols-outlined mb-7 text-5xl text-gold transition-transform group-hover:scale-110">content_cut</span>
-            <h3 class="font-display text-2xl uppercase">Corte de cabelo</h3>
-            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Corte personalizado ao teu estilo e personalidade.</p>
-            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">A PARTIR DE</p><p class="mt-1 font-display text-2xl text-gold">20€</p></div>
+            <h3 class="font-display text-2xl uppercase">Corte Clássico</h3>
+            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Corte profissional personalizado.</p>
+            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">PREÇO</p><p class="mt-1 font-display text-2xl text-gold">13,50 €</p></div>
           </article>
-          <article class="reveal group flex min-h-[330px] flex-col items-center border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9 rounded-md">
+          <article class="reveal group flex min-h-[300px] flex-col items-center rounded-md border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9">
+            <span class="material-symbols-outlined mb-7 text-5xl text-gold transition-transform group-hover:scale-110">styler</span>
+            <h3 class="font-display text-2xl uppercase">Corte + Barba</h3>
+            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Serviço completo de corte e barba.</p>
+            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">PREÇO</p><p class="mt-1 font-display text-2xl text-gold">16,50 €</p></div>
+          </article>
+          <article class="reveal group flex min-h-[300px] flex-col items-center rounded-md border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9">
             <span class="material-symbols-outlined mb-7 text-5xl text-gold transition-transform group-hover:scale-110">face</span>
             <h3 class="font-display text-2xl uppercase">Barba</h3>
-            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Aparar, desenhar e cuidar da tua barba com precisão.</p>
-            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">A PARTIR DE</p><p class="mt-1 font-display text-2xl text-gold">15€</p></div>
+            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Aparar e definir a barba.</p>
+            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">PREÇO</p><p class="mt-1 font-display text-2xl text-gold">6,50 €</p></div>
           </article>
-          <article class="reveal group flex min-h-[330px] flex-col items-center border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9 rounded-md">
-            <div class="mb-7 flex text-gold transition-transform group-hover:scale-110"><span class="material-symbols-outlined text-4xl">content_cut</span><span class="material-symbols-outlined text-4xl">face</span></div>
-            <h3 class="font-display text-2xl uppercase">Corte + barba</h3>
-            <p class="mt-4 flex-1 text-sm leading-6 text-muted">O combo perfeito para um look impecável e completo.</p>
-            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">A PARTIR DE</p><p class="mt-1 font-display text-2xl text-gold">30€</p></div>
+          <article class="reveal group flex min-h-[300px] flex-col items-center rounded-md border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9">
+            <span class="material-symbols-outlined mb-7 text-5xl text-gold transition-transform group-hover:scale-110">face_retouching_natural</span>
+            <h3 class="font-display text-2xl uppercase">Corte + Barba + Sobrancelha</h3>
+            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Corte profissional personalizado moderno.</p>
+            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">PREÇO</p><p class="mt-1 font-display text-2xl text-gold">18 €</p></div>
           </article>
-          <article class="reveal group flex min-h-[330px] flex-col items-center border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9 rounded-md">
-            <span class="material-symbols-outlined mb-7 text-5xl text-gold transition-transform group-hover:scale-110">sanitizer</span>
-            <h3 class="font-display text-2xl uppercase">Styling</h3>
-            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Finalização com produtos premium para o toque final.</p>
-            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">A PARTIR DE</p><p class="mt-1 font-display text-2xl text-gold">10€</p></div>
+          <article class="reveal group flex min-h-[300px] flex-col items-center rounded-md border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9">
+            <span class="material-symbols-outlined mb-7 text-5xl text-gold transition-transform group-hover:scale-110">diamond</span>
+            <h3 class="font-display text-2xl uppercase">Serviço ELDORADO</h3>
+            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Corte de cabelo, barba, sobrancelha e limpeza de pele.</p>
+            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">PREÇO</p><p class="mt-1 font-display text-2xl text-gold">22,50 €</p></div>
+          </article>
+          <article class="reveal group flex min-h-[300px] flex-col items-center rounded-md border border-line bg-panel p-8 text-center transition duration-300 hover:border-gold lg:p-9">
+            <span class="material-symbols-outlined mb-7 text-5xl text-gold transition-transform group-hover:scale-110">child_care</span>
+            <h3 class="font-display text-2xl uppercase">Corte Criança</h3>
+            <p class="mt-4 flex-1 text-sm leading-6 text-muted">Corte para criança até aos 10 anos.</p>
+            <div class="mt-8"><p class="text-[9px] tracking-[0.2em] text-[#9a8f80]">PREÇO</p><p class="mt-1 font-display text-2xl text-gold">10 €</p></div>
           </article>
         </div>
+
+        <aside class="friend-promo reveal mx-auto max-w-[1280px]" aria-labelledby="friend-promo-title">
+          <div class="friend-promo__icon" aria-hidden="true">
+            <span class="material-symbols-outlined">group_add</span>
+          </div>
+          <div class="friend-promo__copy">
+            <p class="friend-promo__eyebrow">VANTAGEM ELDORADO</p>
+            <h3 id="friend-promo-title">Traz um amigo. Ganham todos.</h3>
+            <p>Recebe <strong>2,50 € de desconto</strong> por cada amigo que vier contigo e realizar um serviço.</p>
+            <small>Desconto confirmado e aplicado na barbearia.</small>
+          </div>
+          <div class="friend-promo__offer" aria-label="Desconto de 2 euros e 50 cêntimos por amigo">
+            <span>−2,50 €</span>
+            <small>POR AMIGO</small>
+          </div>
+          <a href="/reserva" class="friend-promo__action">RESERVAR AGORA <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+        </aside>
       </section>
 
       <section id="galeria" class="bg-ink py-20 md:py-28 lg:py-32">
-        <div class="reveal mx-auto max-w-[1280px] px-5 text-center sm:px-6">
-          <p class="text-[10px] font-semibold tracking-[0.3em] text-gold">GALERIA</p>
-          <h2 class="mt-4 font-display text-3xl font-semibold md:text-4xl">Estilo que fala por si</h2>
-          <span class="section-rule mx-auto mt-6"></span>
+        <div class="gallery-mural mx-auto max-w-[1280px] px-5 sm:px-6">
+          <figure class="gallery-tile gallery-tile--photo reveal">
+            <img src="https://gyedyeygudoyvglpipua.supabase.co/storage/v1/object/public/moral/2.webp" alt="Ambiente e equipa da ElDorado Barbershop" loading="lazy" decoding="async" />
+          </figure>
+          <figure class="gallery-tile gallery-tile--video reveal">
+            <video muted loop playsinline preload="metadata" disablepictureinpicture aria-label="Trabalho de barbearia em vídeo"><source src="https://gyedyeygudoyvglpipua.supabase.co/storage/v1/object/public/moral/4.webm" type="video/webm" /></video>
+          </figure>
+          <figure class="gallery-tile gallery-tile--video reveal">
+            <video muted loop playsinline preload="metadata" disablepictureinpicture aria-label="Detalhe de um serviço ElDorado"><source src="https://gyedyeygudoyvglpipua.supabase.co/storage/v1/object/public/moral/6.webm" type="video/webm" /></video>
+          </figure>
+          <figure class="gallery-tile gallery-tile--photo reveal">
+            <img src="https://gyedyeygudoyvglpipua.supabase.co/storage/v1/object/public/moral/1.webp" alt="Equipa da ElDorado Barbershop no espaço da barbearia" loading="lazy" decoding="async" />
+          </figure>
+          <figure class="gallery-tile gallery-tile--video reveal">
+            <video muted loop playsinline preload="metadata" disablepictureinpicture aria-label="Técnica e estilo ElDorado"><source src="https://gyedyeygudoyvglpipua.supabase.co/storage/v1/object/public/moral/3.webm" type="video/webm" /></video>
+          </figure>
+          <figure class="gallery-tile gallery-tile--video reveal">
+            <video muted loop playsinline preload="metadata" disablepictureinpicture aria-label="Resultado de um serviço ElDorado"><source src="https://gyedyeygudoyvglpipua.supabase.co/storage/v1/object/public/moral/5.webm" type="video/webm" /></video>
+          </figure>
         </div>
-        <div class="mx-auto mt-14 grid max-w-[1280px] grid-cols-2 gap-3 px-5 sm:px-6 md:grid-cols-3 lg:grid-cols-6">
-          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKjtjemJ6D6qtZHEnt7eBucOAQ-_IyF4e8RyXfaiWJilX064fHHoQhN4-Ez96c2zebFunzZ_zbFndeSUChU6yc2kWKWYpZKVjmemtBAciyEbGFqsPcFrDW_od8ozn3Dzn1aCs7wFXch95MDhH_TnP9M-2_NGA_P3np5mvQWnNX9HHgd5DA_gPDZDIoCI0W15zX-OKPV14YlSXRYjfRvRhH7SNEatuMH1MdJc3baxeEeSs6WT3XvNh3Q-HZALyOiOIBffAfWVLQAcE" alt="Corte degradê com barba cuidada" loading="lazy" /></figure>
-          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbYvkvigkSlYdp_qEWVwht9mK8Uk2dQUkdHSob2PtoUhrwHudUggwZ2sjjBtgf1tkJKb1vt0-AauIEWO2tvjKCg2p3eiQu1ATyjJ2E2ArCUAQi0hMbqZk_ju8g1S5ztifYYMbONFYw3--Qj66qmpJ4n8jHWk4CJ7G2GZ-qTczahQ_RyJNf3OpU1GY0WJ_fi_U0o_CTe4v4ouvhi5pwP9INamc_MUHiceBfyM0JInvOnICmpEqUIrcJSO1uj7omyCLDp9bABy0hH4w" alt="Penteado pompadour clássico" loading="lazy" /></figure>
-          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4G-e7qg8wm5rjvCH93tSVNnE1hyX3GfIEdy_fsYFi7ZXiFP59-cQ7tGopzRkmeBf2CM8cySt4anAlRF8IGpDev4yUN9KagkVoW8987fXWNCX3MrYrKvzIplHo_txxkv4GShgjs36J16ftjL3vPljuCcJbdVF7OB_TcqE_TPi02ZzBrygMRTLHbInIhKh3dfj-j_Wy1CWbJvCAGxO24kAUYO6MX-4muxPk3n5sdI6lAHeyvOKcE0s6HK8hBMlJcpxePL8yOhYJAiA" alt="Corte texturizado moderno" loading="lazy" /></figure>
-          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQg3gwNEPAtOPDeIZkzG_wWCGY92D82v65Jz95el5SlBbscuCYLL6FcyhvklgEm-NEGp5mKRNYK9W5CnUV5EXktlnpiiVXeoN8k4Nep0HbA3hQvLnCt92mXx0kTV0tS7z0GMHnnFB-wwJaj_v8p_TvkSkZHdxpuRasT6SHjFueP2fTo0cFwErkhUBUwxqapshHR_wf4HJpNEWq7oaaFJ9HEOIWb4tsOzWaqPoPJKfd44R19MNVJXIw4KA2OPa1XYF5mE3H_zvV_0Q" alt="Corte clássico e barba longa" loading="lazy" /></figure>
-          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7Fglf5IQ6Qk360uk5CYs0-h3CGh17SxXZzSKP27oZfi6xmPjSYyU0x0mUjAwHg2D7qWKggKewhYBcOLDJxVn6GUv6v1ImmJ3VCfkHPDIBonBpUTOPOsdaoC0qtkkPEYYT6vDuyJ8P4_lM7igJ-Xp1l17_UpAqNva9yuarK06ev_9TXnliYu5SUm46DV88ZcCxpBxvctfVh89mQLglpRPvVLIZ3bvQx0rENxO6sd9fWCdrl1_fLosleLyqRaTyxDS-h4AKdxeHCNw" alt="Trabalho de precisão na linha do cabelo" loading="lazy" /></figure>
-          <figure class="reveal group aspect-[4/5] overflow-hidden border border-line grayscale transition duration-500 hover:grayscale-0"><img class="h-full w-full object-cover transition duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDZ6NRezwSfFsL6E0u0D7e3DrgVShiNf8NvrqtC9T9bZ3jGK9-B7oQYc_1R6vRcuo4bvG51a98Q_cGfN70VKTGMa4j65GPY6Cfv1AurO0tXKoczdTu0LsSWEfLaHLyZP946n-xi4sI18oRIJo-oetNbaQV6bckNTBzTZvnNE3e6X3Wq0mUgYZMepK2NUTHsKJbJ7OADgRe6Fencger77ynW66TlLwQhHvA43M9psn_fb3zfDW1RvVai_HLHr3SB_MsnO8_T4xO9AA" alt="Cabelo encaracolado com fade" loading="lazy" /></figure>
-        </div>
-        <div class="mt-12 text-center"><a href="#galeria" class="inline-flex items-center gap-3 border border-[#9a8f80] px-8 py-4 text-[10px] font-semibold tracking-[0.15em] transition hover:border-gold hover:text-gold">VER MAIS NA GALERIA <span class="material-symbols-outlined text-lg">arrow_forward</span></a></div>
       </section>
       
       <section aria-labelledby="experience-title" class="border-b border-line bg-ink py-16 md:py-20">

@@ -152,16 +152,81 @@
   display: flex;
 }
 
+.service-option {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 170px;
+  overflow: hidden;
+  padding: 18px;
+}
+
+.service-option__icon {
+  color: #e9c176;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.service-option__content {
+  align-self: start;
+  display: block;
+  min-width: 0;
+  padding-top: 11px;
+}
+
+.service-option__name {
+  display: block;
+  font-family: "Playfair Display", serif;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  padding-right: 20px;
+  text-transform: uppercase;
+}
+
+.service-option__description {
+  color: #aaa39a;
+  display: -webkit-box;
+  font-size: 9px;
+  line-height: 1.45;
+  margin-top: 6px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.service-option__meta {
+  align-items: end;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-width: 0;
+  padding-top: 10px;
+}
+
+.service-option__meta small {
+  color: #aaa39a;
+  flex: 0 0 auto;
+  font-size: 7px;
+  letter-spacing: .12em;
+}
+
+.service-option__meta strong {
+  color: #e9c176;
+  font-family: "Playfair Display", serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .wizard-panel {
   animation: wizard-enter 180ms ease both;
   flex: 1;
   min-height: 0;
   min-width: 0;
   overflow-x: hidden;
-  overflow-y: auto;
-  padding-right: 3px;
-  scrollbar-color: #4e4639 transparent;
-  scrollbar-width: thin;
+  overflow-y: visible;
 }
 
 .booking-shell {
@@ -172,8 +237,44 @@
   box-shadow: 0 22px 60px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  height: 720px;
+  height: auto;
+  min-height: 720px;
   min-width: 0;
+}
+
+.booking-friend-promo {
+  align-items: center;
+  background: linear-gradient(120deg, rgba(233, 193, 118, .11), rgba(233, 193, 118, .035));
+  border: 1px solid rgba(233, 193, 118, .42);
+  border-radius: 10px;
+  display: grid;
+  gap: .85rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  margin-bottom: 1rem;
+  padding: .8rem 1rem;
+}
+
+.booking-friend-promo__icon {
+  align-items: center;
+  background: rgba(233, 193, 118, .12);
+  border-radius: 50%;
+  color: #e9c176;
+  display: flex;
+  font-size: 1.25rem;
+  height: 2.35rem;
+  justify-content: center;
+  width: 2.35rem;
+}
+
+.booking-friend-promo__copy { display: flex; flex-direction: column; min-width: 0; }
+.booking-friend-promo__copy strong { color: #e5e2e1; font-family: "Playfair Display", serif; font-size: .95rem; }
+.booking-friend-promo__copy small { color: #d1c5b4; font-size: .57rem; line-height: 1.55; margin-top: .12rem; }
+.booking-friend-promo__value { color: #e9c176; display: flex; flex-direction: column; font-family: "Playfair Display", serif; font-size: 1.15rem; font-weight: 600; text-align: right; white-space: nowrap; }
+.booking-friend-promo__value small { font-family: "Montserrat", sans-serif; font-size: .42rem; letter-spacing: .16em; margin-top: .18rem; }
+
+@media (max-width: 520px) {
+  .booking-friend-promo { gap: .65rem; grid-template-columns: auto minmax(0, 1fr); padding: .75rem; }
+  .booking-friend-promo__value { align-items: flex-start; grid-column: 2; text-align: left; }
 }
 
 @keyframes wizard-enter {
@@ -354,20 +455,31 @@
   }
 
   .service-option {
-    height: 152px;
+    min-height: 154px;
+    padding: 14px;
   }
+
+  .service-option__icon { font-size: 23px; }
+  .service-option__content { padding-top: 9px; }
+  .service-option__name { font-size: .78rem; padding-right: 14px; }
+  .service-option__description { display: none; }
+  .service-option__meta { padding-top: 8px; }
+  .service-option__meta small { font-size: 6px; letter-spacing: .08em; }
+  .service-option__meta strong { font-size: 1rem; }
 
 }
 
 @media (min-width: 640px) {
   .booking-shell {
-    height: 680px;
+    height: auto;
+    min-height: 680px;
   }
 }
 
 @media (min-width: 1024px) {
   .booking-shell {
-    height: 650px;
+    height: auto;
+    min-height: 650px;
   }
 }
 
