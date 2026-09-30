@@ -255,54 +255,6 @@ async function loadReservations() {
   }
 }
 
-function bookingMinutesWithin(booking, periodStart, periodEnd) {
-  const startText = String(booking.starts_at).slice(11, 16);
-  const endText = String(booking.ends_at).slice(11, 16);
-  const [startHour, startMinute] = startText.split(":").map(Number);
-  const [endHour, endMinute] = endText.split(":").map(Number);
-  const start = startHour * 60 + startMinute;
-  const end = endHour * 60 + endMinute;
-  return Math.max(0, Math.min(end, periodEnd) - Math.max(start, periodStart));
-}
-
-function peakLabel(bookings) {
-  if (!bookings.length) return "Sem pico";
-  const counts = new Map();
-  for (const booking of bookings) {
-    const hour = String(booking.starts_at).slice(11, 13);
-    counts.set(hour, (counts.get(hour) ?? 0) + 1);
-  }
-  const peak = [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
-  return `Pico: ${peak}:00`;
-}
-
-function formatHours(minutes) {
-  const hours = minutes / 60;
-  return `${new Intl.NumberFormat("pt-PT", { maximumFractionDigits: 1 }).format(hours)}h reservadas`;
-}
-
-function updateOperationSummary(visibleBarbers, bookings) {
-  const periods = [
-    { name: "morning", start: 9 * 60, end: 12 * 60 },
-    { name: "afternoon", start: 14 * 60, end: 19 * 60 },
-  ];
-  for (const period of periods) {
-    const periodBookings = bookings.filter((booking) => bookingMinutesWithin(booking, period.start, period.end) > 0);
-    const bookedMinutes = periodBookings.reduce((total, booking) => total + bookingMinutesWithin(booking, period.start, period.end), 0);
-    const capacity = visibleBarbers.length * (period.end - period.start);
-    const occupancy = capacity ? Math.min(100, Math.round((bookedMinutes / capacity) * 100)) : 0;
-    document.querySelector(`#${period.name}-bookings`).textContent = periodBookings.length;
-    document.querySelector(`#${period.name}-occupancy`).textContent = `${occupancy}%`;
-    document.querySelector(`#${period.name}-hours`).textContent = formatHours(bookedMinutes);
-    document.querySelector(`#${period.name}-peak`).textContent = peakLabel(periodBookings);
-    setProgress(document.querySelector(`#${period.name}-progress`), occupancy);
-  }
-  const totalMinutes = bookings.reduce((total, booking) => total + bookingMinutesWithin(booking, 9 * 60, 19 * 60), 0);
-  document.querySelector("#daily-bookings").textContent = bookings.length;
-  document.querySelector("#active-barbers").textContent = `${visibleBarbers.length} ${visibleBarbers.length === 1 ? "barbeiro" : "barbeiros"}`;
-  document.querySelector("#daily-hours").textContent = formatHours(totalMinutes).replace(" reservadas", " ocupadas");
-}
-
 function updateAgendaHeading() {
   agendaDate.value = toIsoDate(visibleDay);
   document.querySelector("#agenda-readable-date").textContent = new Intl.DateTimeFormat("pt-PT", {
@@ -317,7 +269,6 @@ async function loadBookings() {
   if (!visibleBarbers.length) {
     currentBookings = [];
     renderBookingCalendar(bookingsList, { barbers: [], bookings: [] });
-    updateOperationSummary([], []);
     return;
   }
 
@@ -332,7 +283,6 @@ async function loadBookings() {
     ));
     currentBookings = results.flatMap((result) => result.bookings ?? []);
     renderBookingCalendar(bookingsList, { barbers: visibleBarbers, bookings: currentBookings });
-    updateOperationSummary(visibleBarbers, currentBookings);
   } catch (error) {
     bookingsList.innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
   }
