@@ -4,6 +4,7 @@ import { barberExists, getBarberName, getBarbers } from "../repositories/barbers
 import { BookingRequestBody } from "../types/data";
 import { isEmail, isIsoDate, isLocalTimestamp, isPhone, isUuid, lisbonLocalTimestamp } from "../config/validation";
 import { sendBookingConfirmation } from "../services/emailService";
+import { scheduleBookingSmsReminder } from "../services/smsService";
 
 function isSunday(day: string): boolean {
   return new Date(`${day}T12:00:00Z`).getUTCDay() === 0;
@@ -54,9 +55,19 @@ export async function handleBooking(req: Request, res: Response) {
     ]);
 
     if (!barberName || !serviceName) throw new Error("Não foi possível obter os dados da marcação.");
-    await sendBookingConfirmation(bookingInfo, { barberName, serviceName });
+    const details = { barberName, serviceName };
+    const notifications = await Promise.allSettled([
+      sendBookingConfirmation(bookingInfo, details),
+      scheduleBookingSmsReminder(bookingInfo, details),
+    ]);
+    if (notifications[0].status === "rejected") {
+      console.error("A marcação foi criada, mas o email de confirmação ao cliente falhou:", notifications[0].reason);
+    }
+    if (notifications[1].status === "rejected") {
+      console.error("A marcação foi criada, mas o lembrete por SMS não foi agendado:", notifications[1].reason);
+    }
   } catch (error) {
-    console.error("A marcação foi criada, mas o email de confirmação ao cliente falhou:", error);
+    console.error("A marcação foi criada, mas não foi possível preparar as notificações ao cliente:", error);
   }
 
   return res.status(201).json({ message: "Marcação criada com sucesso." });
