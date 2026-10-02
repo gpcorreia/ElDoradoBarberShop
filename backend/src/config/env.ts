@@ -58,6 +58,14 @@ const gmailApiConfigured = Boolean(gmailUser && contactToEmail && gmailApiValues
 const gmailSmtpConfigured = Boolean(gmailUser && gmailAppPassword && contactToEmail);
 const emailConfigured = gmailApiConfigured || gmailSmtpConfigured;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const bulkGateApplicationId = process.env.BULKGATE_APPLICATION_ID?.trim() ?? "";
+const bulkGateApplicationToken = process.env.BULKGATE_APPLICATION_TOKEN?.trim() ?? "";
+const bulkGateSenderId = process.env.BULKGATE_SENDER_ID?.trim() || "gSystem";
+const bulkGateSenderIdValue = process.env.BULKGATE_SENDER_ID_VALUE?.trim() ?? "";
+const bulkGateCountry = (process.env.BULKGATE_COUNTRY?.trim() || "pt").toLowerCase();
+const bulkGateReminderHours = positiveInteger("BULKGATE_REMINDER_HOURS", 24);
+const bulkGateConfigured = Boolean(bulkGateApplicationId && bulkGateApplicationToken);
+const bulkGateSenderIds = /^(gSystem|gShort|gText|gMobile|gPush|gOwn|gProfile|\d+)$/;
 
 if (gmailApiValues.some(Boolean) && !gmailApiValues.every(Boolean)) {
   throw new Error("Para usar a Gmail API, configura GMAIL_API_CLIENT_ID, GMAIL_API_CLIENT_SECRET e GMAIL_API_REFRESH_TOKEN.");
@@ -70,6 +78,24 @@ if ((gmailUser || gmailAppPassword || gmailApiValues.some(Boolean) || process.en
 }
 if (emailConfigured && (!emailPattern.test(gmailUser) || !emailPattern.test(contactToEmail))) {
   throw new Error("GMAIL_USER e CONTACT_TO_EMAIL devem ser endereços de email válidos.");
+}
+if (Boolean(bulkGateApplicationId) !== Boolean(bulkGateApplicationToken)) {
+  throw new Error("BULKGATE_APPLICATION_ID e BULKGATE_APPLICATION_TOKEN devem ser configurados em conjunto.");
+}
+if (!bulkGateSenderIds.test(bulkGateSenderId)) {
+  throw new Error("BULKGATE_SENDER_ID não é um tipo de remetente BulkGate válido.");
+}
+if (bulkGateSenderId !== "gSystem" && !bulkGateSenderIdValue) {
+  throw new Error("BULKGATE_SENDER_ID_VALUE é obrigatório para o remetente BulkGate selecionado.");
+}
+if (bulkGateSenderId === "gText" && bulkGateSenderIdValue.length > 11) {
+  throw new Error("BULKGATE_SENDER_ID_VALUE pode ter no máximo 11 caracteres quando BULKGATE_SENDER_ID=gText.");
+}
+if (!/^[a-z]{2}$/.test(bulkGateCountry)) {
+  throw new Error("BULKGATE_COUNTRY deve ser um código ISO de duas letras, por exemplo pt.");
+}
+if (bulkGateReminderHours > 168) {
+  throw new Error("BULKGATE_REMINDER_HOURS não pode ser superior a 168 horas.");
 }
 
 export const env = Object.freeze({
@@ -96,4 +122,11 @@ export const env = Object.freeze({
   gmailSmtpConfigured,
   contactToEmail,
   emailConfigured,
+  bulkGateApplicationId,
+  bulkGateApplicationToken,
+  bulkGateSenderId,
+  bulkGateSenderIdValue,
+  bulkGateCountry,
+  bulkGateReminderHours,
+  bulkGateConfigured,
 });

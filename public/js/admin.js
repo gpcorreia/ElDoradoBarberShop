@@ -282,7 +282,7 @@ async function loadBookings() {
       api(`/api/admin/barbers/${encodeURIComponent(barber.id)}/bookings?${query}`)
     ));
     currentBookings = results.flatMap((result) => result.bookings ?? []);
-    renderBookingCalendar(bookingsList, { barbers: visibleBarbers, bookings: currentBookings });
+    renderBookingCalendar(bookingsList, { barbers: visibleBarbers, bookings: currentBookings, day: toIsoDate(visibleDay) });
   } catch (error) {
     bookingsList.innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
   }

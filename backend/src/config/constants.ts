@@ -9,8 +9,7 @@ export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export const LOCAL_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
 
 export const WORKING_PERIODS = [
-  { start: "09:00", end: "12:00" },
-  { start: "14:00", end: "19:00" },
+  { start: "08:00", end: "22:00" },
 ] as const;
 
 export const SLOT_INTERVAL_MINUTES = 10;
