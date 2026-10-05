@@ -26,7 +26,7 @@ async function createBookingResponse(req: Request, res: Response, manual: boolea
     && bookingInfo.customer_name.length >= 2
     && bookingInfo.customer_name.length <= 100
     && (manual ? !bookingInfo.customer_email || isEmail(bookingInfo.customer_email) : isEmail(bookingInfo.customer_email))
-    && isPhone(bookingInfo.customer_phone)
+    && (manual ? !bookingInfo.customer_phone || isPhone(bookingInfo.customer_phone) : isPhone(bookingInfo.customer_phone))
     && isLocalTimestamp(bookingInfo.starts_at)
     && (manual || bookingInfo.starts_at > lisbonLocalTimestamp())
     && !isSunday(day);
@@ -53,7 +53,7 @@ async function createBookingResponse(req: Request, res: Response, manual: boolea
   }
 
   const isRetroactive = manual && bookingInfo.starts_at <= lisbonLocalTimestamp();
-  if (!isRetroactive) {
+  if (!isRetroactive && (bookingInfo.customer_email || bookingInfo.customer_phone)) {
     try {
       const [barberName, serviceName] = await Promise.all([
         getBarberName(bookingInfo.barber_id),
@@ -64,7 +64,7 @@ async function createBookingResponse(req: Request, res: Response, manual: boolea
       const details = { barberName, serviceName };
       const [emailResult, smsResult] = await Promise.allSettled([
         bookingInfo.customer_email ? sendBookingConfirmation(bookingInfo, details) : Promise.resolve(),
-        scheduleBookingSmsReminder(bookingInfo, details),
+        bookingInfo.customer_phone ? scheduleBookingSmsReminder(bookingInfo, details) : Promise.resolve(),
       ]);
       if (emailResult.status === "rejected") {
         console.error("A marcação foi criada, mas o email de confirmação ao cliente falhou:", emailResult.reason);

@@ -63,7 +63,7 @@ test("production safeguards", async (t) => {
     const jwt = require("jsonwebtoken");
     const { env } = require("../dist/src/config/env");
     const token = jwt.sign({ email: env.adminEmail, role: "admin" }, env.jwtSecret, { subject: "admin", issuer: env.jwtIssuer, audience: env.jwtAudience, expiresIn: 60 });
-    const options = { method: "POST", headers: { Origin: env.appOrigin, "Content-Type": "application/json", Cookie: `eldorado_session=${token}` }, body: JSON.stringify({ barber_id: "11111111-1111-4111-8111-111111111111", service_id: "22222222-2222-4222-8222-222222222222", customer_name: "Test Customer", customer_phone: "912345678", customer_email: "", starts_at: "2020-01-02T09:00:00" }) };
+    const options = { method: "POST", headers: { Origin: env.appOrigin, "Content-Type": "application/json", Cookie: `eldorado_session=${token}` }, body: JSON.stringify({ barber_id: "11111111-1111-4111-8111-111111111111", service_id: "22222222-2222-4222-8222-222222222222", customer_name: "Test Customer", customer_phone: "", customer_email: "", starts_at: "2020-01-02T09:00:00" }) };
     try {
       assert.equal((await request("/api/admin/booking", options)).status, 201);
       assert.equal((await request("/api/booking", options)).status, 400);
