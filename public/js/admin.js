@@ -1,4 +1,4 @@
-import { renderBookingCalendar } from "/components/admin-calendar.js";
+import { renderBookingCalendar, scheduleTimeFromPoint } from "/components/admin-calendar.js";
 
 const tabs = [...document.querySelectorAll("[data-tab]")];
 const panels = [...document.querySelectorAll("[data-panel]")];
@@ -20,6 +20,7 @@ let barbers = [];
 let services = [];
 let currentBookings = [];
 let reservations = [];
+let preferredManualTime = "";
 let visibleDay = new Date();
 visibleDay.setHours(0, 0, 0, 0);
 
@@ -107,6 +108,7 @@ function activateTab(name) {
   panels.forEach((panel) => { panel.hidden = panel.dataset.panel !== name; });
   if (name === "bookings" && barbers.length) loadBookings();
   if (name === "reservations" && barbers.length) loadReservations();
+  if (name === "invoicing") loadInvoicing();
 }
 
 function setProgress(element, percentage) {
@@ -137,34 +139,6 @@ async function loadServices() {
     .join("");
 }
 
-function renderDashboardChart(daily) {
-  const chart = document.querySelector("#bookings-chart");
-  const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-  const allDays = [];
-  for (const cursor = new Date(firstDay); cursor <= today; cursor.setDate(cursor.getDate() + 1)) {
-    const date = toIsoDate(cursor);
-    const data = daily.find((item) => item.date === date);
-    allDays.push({ date, bookings: data?.bookings ?? 0 });
-  }
-  const visibleDays = allDays.slice(-14);
-  const max = Math.max(1, ...visibleDays.map((item) => item.bookings));
-  if (!visibleDays.length) {
-    chart.innerHTML = '<p class="empty-state">Ainda não existem dados neste mês.</p>';
-    return;
-  }
-
-  chart.innerHTML = visibleDays.map((item) => {
-    const date = localDateFromIso(item.date);
-    const label = new Intl.DateTimeFormat("pt-PT", { day: "2-digit" }).format(date);
-    const isToday = item.date === toIsoDate(today);
-    return `<div class="chart-column ${isToday ? "is-today" : ""}"><b>${item.bookings || ""}</b><div class="chart-bar-track"><i class="chart-bar" data-chart-height="${(item.bookings / max) * 100}"></i></div><small>${label}</small></div>`;
-  }).join("");
-  chart.querySelectorAll("[data-chart-height]").forEach((bar) => {
-    bar.style.height = `${Math.max(2, Number(bar.dataset.chartHeight))}%`;
-  });
-}
-
 function renderRanking(containerSelector, items, kind) {
   const container = document.querySelector(containerSelector);
   if (!items.length) {
@@ -181,27 +155,102 @@ function renderRanking(containerSelector, items, kind) {
   container.querySelectorAll("[data-ranking-width]").forEach((bar) => setProgress(bar, bar.dataset.rankingWidth));
 }
 
+function renderOperationalRanking(containerSelector, items, kind) {
+  const container = document.querySelector(containerSelector);
+  if (!items.length) {
+    container.innerHTML = `<p class="empty-state">Sem ${kind === "service" ? "serviços" : "atividade da equipa"} para hoje.</p>`;
+    return;
+  }
+  const max = Math.max(1, ...items.map((item) => item.bookings));
+  container.innerHTML = items.slice(0, 6).map((item) => {
+    const detail = kind === "service"
+      ? `${item.bookings} ${item.bookings === 1 ? "reserva" : "reservas"}`
+      : `${item.bookings} reservas · ${item.bookedMinutes} min`;
+    return `<div class="ranking-item"><div><div class="ranking-copy"><span>${escapeHtml(item.name)}</span><small>${escapeHtml(detail)}</small></div></div><strong>${item.bookings}</strong><div class="ranking-track"><i data-ranking-width="${(item.bookings / max) * 100}"></i></div></div>`;
+  }).join("");
+  container.querySelectorAll("[data-ranking-width]").forEach((bar) => setProgress(bar, bar.dataset.rankingWidth));
+}
+
+function renderTodayAgenda(items) {
+  const container = document.querySelector("#today-upcoming");
+  if (!items.length) {
+    container.innerHTML = '<p class="empty-state">Não existem marcações ativas para hoje.</p>';
+    return;
+  }
+  container.innerHTML = items.map((item) => {
+    const time = String(item.starts_at).slice(11, 16);
+    return `<div class="upcoming-item"><span class="upcoming-time"><strong>${escapeHtml(time)}</strong><small>hoje</small></span><span class="upcoming-copy"><strong>${escapeHtml(item.customer_name)}</strong><span>${escapeHtml(item.service_name)} · ${escapeHtml(item.barber_name)}</span></span><small>RESERVA</small></div>`;
+  }).join("");
+}
+
+function renderInvoicingChart(monthly) {
+  const container = document.querySelector("#invoicing-chart");
+  if (!monthly.length) {
+    container.innerHTML = '<p class="empty-state">Ainda não existem dados de faturação.</p>';
+    return;
+  }
+  const width = 760;
+  const height = 250;
+  const padding = 28;
+  const maximum = Math.max(1, ...monthly.map((item) => Number(item.revenue)));
+  const points = monthly.map((item, index) => ({
+    ...item,
+    x: padding + (index / Math.max(1, monthly.length - 1)) * (width - padding * 2),
+    y: height - padding - (Number(item.revenue) / maximum) * (height - padding * 2),
+  }));
+  const path = points.map((point, index) => `${index ? "L" : "M"}${point.x},${point.y}`).join(" ");
+  const area = `${path} L${points.at(-1).x},${height - padding} L${points[0].x},${height - padding} Z`;
+  const labels = monthly.map((item) => {
+    const date = new Date(`${item.month}-01T12:00:00Z`);
+    return new Intl.DateTimeFormat("pt-PT", { month: "short" }).format(date).replace(".", "");
+  });
+  container.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Evolução da faturação nos últimos 12 meses"><defs><linearGradient id="invoice-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9c176" stop-opacity=".28"/><stop offset="1" stop-color="#e9c176" stop-opacity="0"/></linearGradient></defs><path class="invoice-grid-line" d="M${padding},${height-padding} H${width-padding} M${padding},${height/2} H${width-padding} M${padding},${padding} H${width-padding}"/><path class="invoice-area" d="${area}"/><path class="invoice-line" d="${path}"/>${points.map((point) => `<circle cx="${point.x}" cy="${point.y}" r="4"><title>${escapeHtml(point.month)}: ${escapeHtml(formatPrice(point.revenue))}</title></circle>`).join("")}</svg><div class="invoicing-chart-labels">${labels.map((label) => `<span>${escapeHtml(label)}</span>`).join("")}</div>`;
+}
+
 async function loadDashboard() {
   try {
     const { overview } = await api("/api/admin/dashboard");
     const { summary } = overview;
-    const monthName = new Intl.DateTimeFormat("pt-PT", { month: "long", year: "numeric" }).format(new Date());
-    document.querySelector("#dashboard-period").textContent = monthName[0].toUpperCase() + monthName.slice(1);
+    const todayName = new Intl.DateTimeFormat("pt-PT", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
+    document.querySelector("#dashboard-period").textContent = todayName[0].toUpperCase() + todayName.slice(1);
     document.querySelector("#metric-today-bookings").textContent = summary.todayBookings;
-    document.querySelector("#metric-today-note").textContent = `${formatPrice(summary.todayRevenue)} de faturação confirmada hoje`;
-    document.querySelector("#metric-month-revenue").textContent = formatShortPrice(summary.monthRevenue);
-    document.querySelector("#metric-month-note").textContent = `${summary.monthBookings} reservas ativas no mês`;
+    document.querySelector("#metric-today-note").textContent = summary.todayBookings ? "Marcações ativas para o dia" : "Agenda livre para hoje";
     document.querySelector("#metric-occupancy").textContent = summary.occupancyToday;
     setProgress(document.querySelector("#metric-occupancy-bar"), summary.occupancyToday);
-    document.querySelector("#metric-cancellations").textContent = summary.cancellationRate;
-    document.querySelector("#metric-cancellations-note").textContent = summary.cancellationRate <= 10 ? "Dentro de um intervalo saudável" : "Merece acompanhamento";
-    document.querySelector("#month-bookings-badge").textContent = `${summary.monthBookings} reservas`;
-    renderDashboardChart(overview.daily);
-    renderRanking("#service-ranking", overview.services, "service");
-    renderRanking("#barber-ranking", overview.barbers, "barber");
+    document.querySelector("#metric-cancellations").textContent = summary.cancellationsToday;
+    document.querySelector("#metric-cancellations-note").textContent = summary.cancellationsToday ? "Cancelamentos registados hoje" : "Sem cancelamentos hoje";
+    document.querySelector("#metric-no-shows").textContent = summary.noShowsToday;
+    document.querySelector("#today-bookings-badge").textContent = `${summary.todayBookings} reservas`;
+    renderTodayAgenda(overview.upcoming);
+    renderOperationalRanking("#service-ranking", overview.services, "service");
+    renderOperationalRanking("#barber-ranking", overview.barbers, "barber");
   } catch (error) {
-    document.querySelector("#bookings-chart").innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
+    document.querySelector("#today-upcoming").innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
     showMessage("Dashboard indisponível", error.message, true);
+  }
+}
+
+async function loadInvoicing() {
+  const chart = document.querySelector("#invoicing-chart");
+  chart.innerHTML = '<p class="empty-state">A carregar faturação…</p>';
+  try {
+    const { invoicing } = await api("/api/admin/invoicing");
+    const { summary } = invoicing;
+    const monthName = new Intl.DateTimeFormat("pt-PT", { month: "long", year: "numeric" }).format(new Date());
+    document.querySelector("#invoicing-period").textContent = monthName[0].toUpperCase() + monthName.slice(1);
+    document.querySelector("#invoice-month-revenue").textContent = formatShortPrice(summary.monthRevenue);
+    document.querySelector("#invoice-month-note").textContent = `${summary.monthBookings} ${summary.monthBookings === 1 ? "reserva ativa" : "reservas ativas"} no mês`;
+    document.querySelector("#invoice-average-ticket").textContent = formatPrice(summary.averageTicket);
+    document.querySelector("#invoice-previous-revenue").textContent = formatShortPrice(summary.previousRevenue);
+    const change = summary.percentageChange;
+    document.querySelector("#invoice-change").textContent = change === null ? "—" : `${change >= 0 ? "+" : ""}${change}`;
+    document.querySelector("#invoice-change-note").textContent = change === null ? "Ainda sem histórico comparável" : `${change >= 0 ? "Crescimento" : "Descida"} face ao mês anterior`;
+    renderInvoicingChart(invoicing.monthly);
+    renderRanking("#invoice-service-ranking", invoicing.services, "service");
+    renderRanking("#invoice-barber-ranking", invoicing.barbers, "barber");
+  } catch (error) {
+    chart.innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
+    showMessage("Faturação indisponível", error.message, true);
   }
 }
 
@@ -326,7 +375,7 @@ async function loadManualAvailability() {
   timeSelect.innerHTML = '<option value="">A carregar horários…</option>';
   try {
     const query = new URLSearchParams({ service_id: serviceId });
-    const result = await api(`/api/appointments/${encodeURIComponent(barberId)}/${encodeURIComponent(day)}?${query}`);
+    const result = await api(`/api/admin/appointments/${encodeURIComponent(barberId)}/${encodeURIComponent(day)}?${query}`);
     if (!result.appointments?.length) {
       timeSelect.innerHTML = '<option value="">Sem horários disponíveis</option>';
       return;
@@ -335,22 +384,26 @@ async function loadManualAvailability() {
       .map((time) => `<option value="${escapeHtml(time)}">${escapeHtml(time)}</option>`)
       .join("");
     timeSelect.disabled = false;
+    if (preferredManualTime && result.appointments.includes(preferredManualTime)) {
+      timeSelect.value = preferredManualTime;
+    } else if (preferredManualTime) {
+      showMessage("Horário indisponível", "O serviço escolhido não cabe nesse espaço. Seleciona outro horário.", true);
+    }
   } catch (error) {
     timeSelect.innerHTML = '<option value="">Não foi possível carregar</option>';
     showMessage("Horários indisponíveis", error.message, true);
   }
 }
 
-function openManualBooking() {
+function openManualBooking(prefill = {}) {
   manualBookingForm.reset();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const chosenDay = visibleDay >= today ? visibleDay : today;
-  manualBookingForm.elements.day.min = toIsoDate(today);
-  manualBookingForm.elements.day.value = toIsoDate(chosenDay);
+  preferredManualTime = prefill.time || "";
+  const requestedDay = prefill.day ? localDateFromIso(prefill.day) : visibleDay;
+  manualBookingForm.elements.day.removeAttribute("min");
+  manualBookingForm.elements.day.value = toIsoDate(requestedDay);
   const activeTab = document.querySelector("[data-tab].is-active")?.dataset.tab;
-  manualBookingForm.elements.barber_id.value = activeTab === "reservations" ? reservationBarber.value : barberSelect.value;
-  manualBookingForm.elements.time.innerHTML = '<option value="">Escolhe barbeiro e serviço</option>';
+  manualBookingForm.elements.barber_id.value = prefill.barberId || (activeTab === "reservations" ? reservationBarber.value : barberSelect.value);
+  manualBookingForm.elements.time.innerHTML = `<option value="">${preferredManualTime ? `Escolhe o serviço para reservar às ${escapeHtml(preferredManualTime)}` : "Escolhe barbeiro e serviço"}</option>`;
   manualBookingForm.elements.time.disabled = true;
   manualBookingDialog.showModal();
 }
@@ -426,9 +479,16 @@ barberSelect.addEventListener("change", loadBookings);
 
 bookingsList.addEventListener("click", (event) => {
   const eventCard = event.target.closest("[data-open-booking]");
-  if (!eventCard) return;
-  const booking = currentBookings.find((item) => item.id === eventCard.dataset.openBooking);
-  if (booking) openBookingDetails(booking);
+  if (eventCard) {
+    const booking = currentBookings.find((item) => item.id === eventCard.dataset.openBooking);
+    if (booking) openBookingDetails(booking);
+    return;
+  }
+  const column = event.target.closest("[data-create-booking-barber]");
+  if (!column) return;
+  const day = toIsoDate(visibleDay);
+  const time = scheduleTimeFromPoint(column, event.clientY);
+  openManualBooking({ barberId: column.dataset.createBookingBarber, day, time });
 });
 
 reservationSearch.addEventListener("input", renderReservations);
@@ -464,7 +524,7 @@ bookingDialog.addEventListener("click", (event) => {
   if (event.target === bookingDialog) bookingDialog.close();
 });
 
-document.querySelector("[data-open-manual-booking]").addEventListener("click", openManualBooking);
+document.querySelector("[data-open-manual-booking]").addEventListener("click", () => openManualBooking());
 document.querySelector("[data-close-manual-booking]").addEventListener("click", () => manualBookingDialog.close());
 manualBookingDialog.addEventListener("click", (event) => {
   if (event.target === manualBookingDialog) manualBookingDialog.close();
@@ -494,6 +554,7 @@ manualBookingForm.addEventListener("submit", async (event) => {
       }),
     });
     visibleDay = localDateFromIso(day);
+    preferredManualTime = "";
     manualBookingDialog.close();
     showMessage("Reserva confirmada", result.message);
     await Promise.all([loadBookings(), loadReservations(), loadDashboard()]);
@@ -543,6 +604,7 @@ document.querySelectorAll("[data-image-input]").forEach((input) => {
     const file = input.files[0];
     if (!file) return;
     const preview = document.querySelector(`#${input.dataset.preview}`);
+    if (preview.src.startsWith("blob:")) URL.revokeObjectURL(preview.src);
     preview.src = URL.createObjectURL(file);
     preview.classList.remove("is-hidden");
     document.querySelector(`[data-placeholder='${input.dataset.preview}']`).classList.add("is-hidden");
@@ -550,8 +612,12 @@ document.querySelectorAll("[data-image-input]").forEach((input) => {
 });
 
 document.querySelector("#logout").addEventListener("click", async () => {
-  try { await api("/api/admin/logout", { method: "POST" }); }
-  finally { window.location.replace("/admin/login"); }
+  try {
+    await api("/api/admin/logout", { method: "POST" });
+    window.location.replace("/admin/login");
+  } catch (error) {
+    showMessage("Não foi possível terminar sessão", error.message, true);
+  }
 });
 
 updateAgendaHeading();

@@ -22,7 +22,7 @@ export function barberCard(barber, selected) {
   return `
     <button type="button" data-action="select-barber" data-id="${escapeHtml(barber.id)}" class="wizard-option barber-option ${selected ? "is-selected" : ""} group overflow-hidden bg-panel text-left">
       <span class="selection-check"><span class="material-symbols-outlined text-sm">check</span></span>
-      <img data-barber-photo src="${escapeHtml(barber.photo)}" alt="${escapeHtml(barber.name)}" class="aspect-[4/5] w-full object-cover grayscale transition duration-500 group-hover:grayscale-0" />
+      <img data-barber-photo src="${escapeHtml(barber.photo)}" alt="${escapeHtml(barber.name)}" class="aspect-[4/5] w-full object-cover" />
       <span class="block p-3 text-center sm:p-4"><strong class="block font-display text-base font-medium sm:text-lg">${escapeHtml(barber.name)}</strong></span>
     </button>
   `;

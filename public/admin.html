@@ -29,8 +29,10 @@
         <button type="button" data-tab="dashboard" class="admin-tab is-active"><span class="material-symbols-outlined">space_dashboard</span><span>Dashboard</span></button>
         <button type="button" data-tab="reservations" class="admin-tab"><span class="material-symbols-outlined">event_note</span><span>Reservas</span></button>
         <button type="button" data-tab="bookings" class="admin-tab"><span class="material-symbols-outlined">calendar_month</span><span>Agenda</span></button>
+        <button type="button" data-tab="invoicing" class="admin-tab"><span class="material-symbols-outlined">payments</span><span>Faturação</span></button>
         <button type="button" data-tab="barbers" class="admin-tab"><span class="material-symbols-outlined">groups</span><span>Barbeiros</span></button>
         <button type="button" data-tab="products" class="admin-tab"><span class="material-symbols-outlined">inventory_2</span><span>Produtos</span></button>
+        <button id="logout" type="button" class="admin-tab sidebar-logout" aria-label="Terminar sessão" title="Terminar sessão"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Sair</span></button>
       </nav>
 
       <div class="sidebar-footer">
@@ -44,15 +46,15 @@
         <div class="topbar-context"><span class="material-symbols-outlined">content_cut</span><span>Barbearia configurada</span></div>
         <div class="topbar-actions">
           <span class="status-line"><i></i> Operacional</span>
-          <button id="logout" class="icon-button logout-button" type="button" aria-label="Terminar sessão" title="Terminar sessão"><span class="material-symbols-outlined">logout</span></button>
+          <a href="/" class="back-to-site"><span class="material-symbols-outlined" aria-hidden="true">home</span><span>Voltar ao site</span></a>
         </div>
       </header>
 
       <main class="admin-content">
         <section data-panel="dashboard" class="admin-panel">
           <header class="page-heading">
-            <div><p class="eyebrow">VISÃO GERAL</p><h1>O pulso da barbearia</h1><p>Acompanha a operação, a procura e o desempenho da equipa num só lugar.</p></div>
-            <div class="period-badge"><span class="material-symbols-outlined">calendar_today</span><span id="dashboard-period">Mês atual</span></div>
+            <div><p class="eyebrow">VISÃO GERAL</p><h1>O pulso da barbearia</h1><p>Acompanha a operação e a ocupação da equipa ao longo do dia.</p></div>
+            <div class="period-badge"><span class="material-symbols-outlined">today</span><span id="dashboard-period">Hoje</span></div>
           </header>
 
           <div class="metric-grid" aria-live="polite">
@@ -62,40 +64,37 @@
               <p id="metric-today-note">A carregar operação de hoje…</p>
             </article>
             <article class="metric-card">
-              <div class="metric-label"><span>FATURAÇÃO DO MÊS</span><span class="material-symbols-outlined">payments</span></div>
-              <div class="metric-value"><strong id="metric-month-revenue">—</strong></div>
-              <p id="metric-month-note">Valor das reservas confirmadas</p>
-            </article>
-            <article class="metric-card">
               <div class="metric-label"><span>OCUPAÇÃO HOJE</span><span class="material-symbols-outlined">speed</span></div>
               <div class="metric-value"><strong id="metric-occupancy">—</strong><small>%</small></div>
               <div class="metric-progress"><i id="metric-occupancy-bar"></i></div>
               <p>Tempo reservado face à capacidade da equipa</p>
             </article>
             <article class="metric-card">
-              <div class="metric-label"><span>CANCELAMENTOS</span><span class="material-symbols-outlined">event_busy</span></div>
-              <div class="metric-value"><strong id="metric-cancellations">—</strong><small>%</small></div>
-              <p id="metric-cancellations-note">Taxa no mês atual</p>
+              <div class="metric-label"><span>CANCELAMENTOS HOJE</span><span class="material-symbols-outlined">event_busy</span></div>
+              <div class="metric-value"><strong id="metric-cancellations">—</strong><small>reservas</small></div>
+              <p id="metric-cancellations-note">Marcações canceladas no dia</p>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label"><span>FALTAS HOJE</span><span class="material-symbols-outlined">person_off</span></div>
+              <div class="metric-value"><strong id="metric-no-shows">—</strong><small>no-shows</small></div>
+              <p>Acompanha clientes que não compareceram</p>
             </article>
           </div>
 
           <div class="dashboard-main-grid dashboard-chart-grid">
-            <article class="surface-card chart-card">
-              <header class="card-heading">
-                <div><span>RITMO DO MÊS</span><h2>Marcações por dia</h2></div>
-                <span class="soft-badge" id="month-bookings-badge">— reservas</span>
-              </header>
-              <div id="bookings-chart" class="bookings-chart"><p class="empty-state">A carregar atividade…</p></div>
+            <article class="surface-card">
+              <header class="card-heading"><div><span>AGENDA DO DIA</span><h2>Marcações de hoje</h2></div><span class="soft-badge" id="today-bookings-badge">— reservas</span></header>
+              <div id="today-upcoming" class="upcoming-list"><p class="empty-state">A carregar agenda…</p></div>
             </article>
           </div>
 
           <div class="dashboard-secondary-grid">
             <article class="surface-card">
-              <header class="card-heading"><div><span>PROCURA</span><h2>Serviços mais pedidos</h2></div></header>
+              <header class="card-heading"><div><span>PROCURA HOJE</span><h2>Serviços do dia</h2></div></header>
               <div id="service-ranking" class="ranking-list"><p class="empty-state">A carregar serviços…</p></div>
             </article>
             <article class="surface-card">
-              <header class="card-heading"><div><span>EQUIPA</span><h2>Faturação por barbeiro</h2></div></header>
+              <header class="card-heading"><div><span>EQUIPA HOJE</span><h2>Carga por barbeiro</h2></div></header>
               <div id="barber-ranking" class="ranking-list"><p class="empty-state">A carregar equipa…</p></div>
             </article>
           </div>
@@ -139,8 +138,29 @@
               <label class="compact-select"><span>FILTRAR</span><select id="booking-barber"><option value="">Todos os barbeiros</option></select></label>
             </header>
             <div id="bookings-list" class="schedule-wrapper"><p class="empty-state">A carregar agenda…</p></div>
-            <footer class="schedule-footer"><span class="material-symbols-outlined">schedule</span> Horário contínuo: 08:00–22:00 · Marcações de 10 em 10 minutos</footer>
+            <footer class="schedule-footer"><span class="material-symbols-outlined">touch_app</span> Toca ou clica num espaço vazio para criar uma reserva · 08:00–22:00</footer>
           </article>
+        </section>
+
+        <section data-panel="invoicing" class="admin-panel" hidden>
+          <header class="page-heading">
+            <div><p class="eyebrow">FATURAÇÃO</p><h1>Desempenho financeiro</h1><p>Analisa a faturação mensal, a evolução anual e os serviços que mais contribuem para o negócio.</p></div>
+            <div class="period-badge"><span class="material-symbols-outlined">calendar_month</span><span id="invoicing-period">Mês atual</span></div>
+          </header>
+          <div class="metric-grid" aria-live="polite">
+            <article class="metric-card metric-card-accent"><div class="metric-label"><span>FATURAÇÃO DO MÊS</span><span class="material-symbols-outlined">payments</span></div><div class="metric-value"><strong id="invoice-month-revenue">—</strong></div><p id="invoice-month-note">A carregar faturação…</p></article>
+            <article class="metric-card"><div class="metric-label"><span>TICKET MÉDIO</span><span class="material-symbols-outlined">receipt_long</span></div><div class="metric-value"><strong id="invoice-average-ticket">—</strong></div><p>Valor médio por marcação ativa</p></article>
+            <article class="metric-card"><div class="metric-label"><span>MÊS ANTERIOR</span><span class="material-symbols-outlined">history</span></div><div class="metric-value"><strong id="invoice-previous-revenue">—</strong></div><p>Faturação do período anterior</p></article>
+            <article class="metric-card"><div class="metric-label"><span>EVOLUÇÃO MENSAL</span><span class="material-symbols-outlined">trending_up</span></div><div class="metric-value"><strong id="invoice-change">—</strong><small>%</small></div><p id="invoice-change-note">Comparação com o mês anterior</p></article>
+          </div>
+          <article class="surface-card invoicing-chart-card">
+            <header class="card-heading"><div><span>ÚLTIMOS 12 MESES</span><h2>Evolução da faturação</h2></div><span class="soft-badge">Valores estimados pelos serviços reservados</span></header>
+            <div id="invoicing-chart" class="invoicing-chart"><p class="empty-state">A carregar evolução…</p></div>
+          </article>
+          <div class="dashboard-secondary-grid">
+            <article class="surface-card"><header class="card-heading"><div><span>SERVIÇOS</span><h2>Faturação por serviço</h2></div></header><div id="invoice-service-ranking" class="ranking-list"><p class="empty-state">A carregar serviços…</p></div></article>
+            <article class="surface-card"><header class="card-heading"><div><span>EQUIPA</span><h2>Faturação por barbeiro</h2></div></header><div id="invoice-barber-ranking" class="ranking-list"><p class="empty-state">A carregar equipa…</p></div></article>
+          </div>
         </section>
 
         <section data-panel="barbers" class="admin-panel" hidden>
@@ -197,7 +217,7 @@
         <label class="field-label"><span>NOME DO CLIENTE</span><input name="customer_name" maxlength="100" class="admin-field" autocomplete="name" required /></label>
         <div class="manual-form-grid">
           <label class="field-label"><span>TELEFONE</span><input name="customer_phone" type="tel" maxlength="20" class="admin-field" autocomplete="tel" required /></label>
-          <label class="field-label"><span>EMAIL</span><input name="customer_email" type="email" maxlength="150" class="admin-field" autocomplete="email" required /></label>
+          <label class="field-label"><span>EMAIL <small>(OPCIONAL)</small></span><input name="customer_email" type="email" maxlength="150" class="admin-field" autocomplete="email" /></label>
         </div>
         <button class="primary-button manual-submit" type="submit">CONFIRMAR RESERVA <span class="material-symbols-outlined">check</span></button>
       </form>

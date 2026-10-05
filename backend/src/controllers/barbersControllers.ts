@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { Barber, createBarber } from "../repositories/barbers";
+import { createBarber } from "../repositories/barbers";
 
 
 export const handleBarberCreation = async (req: Request, res: Response) => {
-  const { name } = req.body as Pick<Barber, "name">;
+  const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
   const image = req.file;  
 
     if (!name?.trim() || name.trim().length > 100 || !image) {

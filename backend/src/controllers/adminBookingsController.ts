@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { cancelBooking, getAdminBookings, getBarberBookings, getDashboardOverview } from "../repositories/adminBookings";
+import { cancelBooking, getAdminBookings, getBarberBookings, getDashboardOverview, getInvoicingOverview } from "../repositories/adminBookings";
 import { isLocalTimestamp, isUuid, lisbonLocalTimestamp } from "../config/validation";
 import { WORKING_PERIODS } from "../config/constants";
 
@@ -74,7 +74,6 @@ export async function handleCancelBooking(req: Request, res: Response) {
 export async function handleGetDashboardOverview(_req: Request, res: Response) {
   const now = lisbonLocalTimestamp();
   const today = now.slice(0, 10);
-  const monthStart = `${today.slice(0, 7)}-01T00:00:00`;
   const todayStart = `${today}T00:00:00`;
   const workingMinutesPerBarber = WORKING_PERIODS.reduce(
     (total, period) => total + minutes(period.end) - minutes(period.start),
@@ -85,13 +84,33 @@ export async function handleGetDashboardOverview(_req: Request, res: Response) {
     const overview = await getDashboardOverview({
       todayStart,
       todayEnd: addUtcDays(todayStart, 1),
-      monthStart,
-      monthEnd: nextMonthStart(monthStart),
       workingMinutesPerBarber,
     });
     return res.status(200).json({ overview });
   } catch (error) {
     console.error("Erro ao carregar o dashboard:", error);
     return res.status(500).json({ message: "Não foi possível carregar os indicadores do dashboard." });
+  }
+}
+
+export async function handleGetInvoicingOverview(_req: Request, res: Response) {
+  const currentMonth = lisbonLocalTimestamp().slice(0, 7);
+  const currentStart = `${currentMonth}-01T00:00:00`;
+  const previousDate = new Date(`${currentStart}Z`);
+  previousDate.setUTCMonth(previousDate.getUTCMonth() - 1);
+  const historyDate = new Date(`${currentStart}Z`);
+  historyDate.setUTCMonth(historyDate.getUTCMonth() - 11);
+
+  try {
+    const invoicing = await getInvoicingOverview({
+      historyStart: historyDate.toISOString().slice(0, 19),
+      rangeEnd: nextMonthStart(currentStart),
+      currentMonth,
+      previousMonth: previousDate.toISOString().slice(0, 7),
+    });
+    return res.status(200).json({ invoicing });
+  } catch (error) {
+    console.error("Erro ao carregar a faturação:", error);
+    return res.status(500).json({ message: "Não foi possível carregar os dados de faturação." });
   }
 }

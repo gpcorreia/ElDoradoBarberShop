@@ -17,7 +17,8 @@ O servidor fica disponível em `http://localhost:1000`.
 ## Configuração obrigatória
 
 - `SUPABASE_URL`: URL do projeto Supabase.
-- `SUPABASE_SERVICE_ROLE_KEY`: chave secreta usada exclusivamente no backend.
+- `SUPABASE_KEY`: chave secreta usada exclusivamente no backend.
+- `APP_ORIGIN`: origem pública exata do site, com HTTPS e sem caminho (por exemplo `https://www.eldoradobarbershop.com`).
 - `JWT_SECRET_KEY`: segredo aleatório com pelo menos 32 caracteres.
 - `ADMIN_EMAIL`: email de acesso administrativo.
 - `ADMIN_PASSWORD_HASH`: hash bcrypt da palavra-passe administrativa.

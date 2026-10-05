@@ -10,7 +10,7 @@ function isSunday(day: string): boolean {
   return new Date(`${day}T12:00:00Z`).getUTCDay() === 0;
 }
 
-export async function handleBooking(req: Request, res: Response) {
+async function createBookingResponse(req: Request, res: Response, manual: boolean) {
   const bookingInfo: BookingRequestBody = {
     barber_id: String(req.body?.barber_id ?? ""),
     service_id: String(req.body?.service_id ?? ""),
@@ -25,14 +25,18 @@ export async function handleBooking(req: Request, res: Response) {
     && isUuid(bookingInfo.service_id)
     && bookingInfo.customer_name.length >= 2
     && bookingInfo.customer_name.length <= 100
-    && isEmail(bookingInfo.customer_email)
+    && (manual ? !bookingInfo.customer_email || isEmail(bookingInfo.customer_email) : isEmail(bookingInfo.customer_email))
     && isPhone(bookingInfo.customer_phone)
     && isLocalTimestamp(bookingInfo.starts_at)
-    && bookingInfo.starts_at > lisbonLocalTimestamp()
+    && (manual || bookingInfo.starts_at > lisbonLocalTimestamp())
     && !isSunday(day);
 
   if (!valid) {
-    return res.status(400).json({ message: "Os dados da marcação são inválidos ou o horário já passou." });
+    return res.status(400).json({
+      message: manual
+        ? "Os dados da marcação são inválidos."
+        : "Os dados da marcação são inválidos ou o horário já passou.",
+    });
   }
 
   const result = await createBooking(bookingInfo);
@@ -48,32 +52,43 @@ export async function handleBooking(req: Request, res: Response) {
     return res.status(500).json({ message: "Não foi possível concluir a marcação. Tenta novamente." });
   }
 
-  try {
-    const [barberName, serviceName] = await Promise.all([
-      getBarberName(bookingInfo.barber_id),
-      getServiceName(bookingInfo.service_id),
-    ]);
+  const isRetroactive = manual && bookingInfo.starts_at <= lisbonLocalTimestamp();
+  if (!isRetroactive) {
+    try {
+      const [barberName, serviceName] = await Promise.all([
+        getBarberName(bookingInfo.barber_id),
+        getServiceName(bookingInfo.service_id),
+      ]);
 
-    if (!barberName || !serviceName) throw new Error("Não foi possível obter os dados da marcação.");
-    const details = { barberName, serviceName };
-    const notifications = await Promise.allSettled([
-      sendBookingConfirmation(bookingInfo, details),
-      scheduleBookingSmsReminder(bookingInfo, details),
-    ]);
-    if (notifications[0].status === "rejected") {
-      console.error("A marcação foi criada, mas o email de confirmação ao cliente falhou:", notifications[0].reason);
+      if (!barberName || !serviceName) throw new Error("Não foi possível obter os dados da marcação.");
+      const details = { barberName, serviceName };
+      const [emailResult, smsResult] = await Promise.allSettled([
+        bookingInfo.customer_email ? sendBookingConfirmation(bookingInfo, details) : Promise.resolve(),
+        scheduleBookingSmsReminder(bookingInfo, details),
+      ]);
+      if (emailResult.status === "rejected") {
+        console.error("A marcação foi criada, mas o email de confirmação ao cliente falhou:", emailResult.reason);
+      }
+      if (smsResult.status === "rejected") {
+        console.error("A marcação foi criada, mas o lembrete por SMS não foi agendado:", smsResult.reason);
+      }
+    } catch (error) {
+      console.error("A marcação foi criada, mas não foi possível preparar as notificações ao cliente:", error);
     }
-    if (notifications[1].status === "rejected") {
-      console.error("A marcação foi criada, mas o lembrete por SMS não foi agendado:", notifications[1].reason);
-    }
-  } catch (error) {
-    console.error("A marcação foi criada, mas não foi possível preparar as notificações ao cliente:", error);
   }
 
   return res.status(201).json({ message: "Marcação criada com sucesso." });
 }
 
-export async function searchAppointmentsAvailable(req: Request, res: Response) {
+export function handleBooking(req: Request, res: Response) {
+  return createBookingResponse(req, res, false);
+}
+
+export function handleAdminBooking(req: Request, res: Response) {
+  return createBookingResponse(req, res, true);
+}
+
+async function appointmentsAvailable(req: Request, res: Response, includePast: boolean) {
   const barberId = String(req.params.barber_id ?? "");
   const day = String(req.params.day ?? "");
   const serviceId = String(req.query.service_id ?? "");
@@ -90,13 +105,21 @@ export async function searchAppointmentsAvailable(req: Request, res: Response) {
     ]);
     if (!duration || !validBarber) return res.status(404).json({ message: "Barbeiro ou serviço não encontrado." });
 
-    const appointments = calculateAvailableSlots(bookings, day, duration);
+    const appointments = calculateAvailableSlots(bookings, day, duration, includePast);
     res.set("Cache-Control", "private, no-store");
     return res.status(200).json({ appointments });
   } catch (error) {
     console.error("Erro ao procurar horários:", error);
     return res.status(500).json({ message: "Não foi possível carregar os horários disponíveis." });
   }
+}
+
+export function searchAppointmentsAvailable(req: Request, res: Response) {
+  return appointmentsAvailable(req, res, false);
+}
+
+export function searchAdminAppointmentsAvailable(req: Request, res: Response) {
+  return appointmentsAvailable(req, res, true);
 }
 
 export async function handleGetBarbers(_req: Request, res: Response) {
