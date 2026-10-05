@@ -96,7 +96,7 @@ export async function createBooking(bookingInfo: BookingRequestBody): Promise<Cr
     barber_id: bookingInfo.barber_id,
     service_id: bookingInfo.service_id,
     customer_name: bookingInfo.customer_name,
-    customer_email: bookingInfo.customer_email,
+    customer_email: bookingInfo.customer_email || null,
     customer_phone: bookingInfo.customer_phone,
     starts_at: bookingInfo.starts_at,
     ends_at: endsAt,
@@ -133,7 +133,8 @@ export async function getBookedAppointments(barberId: string, day: string): Prom
 export function calculateAvailableSlots(
   appointments: Appointment[],
   day: string,
-  durationMinutes: number
+  durationMinutes: number,
+  includePast = false
 ): string[] {
   const bookedSlots = appointments.map((appointment) => ({
     start: timeToMinutes(getTimeFromTimestamp(appointment.starts_at)),
@@ -151,7 +152,7 @@ export function calculateAvailableSlots(
       currentMinutes += SLOT_INTERVAL_MINUTES
     ) {
       const currentTime = minutesToTime(currentMinutes);
-      if (`${day}T${currentTime}:00` <= currentLocalTime) continue;
+      if (!includePast && `${day}T${currentTime}:00` <= currentLocalTime) continue;
 
       const slotEnd = currentMinutes + durationMinutes;
       const overlaps = bookedSlots.some((booked) => currentMinutes < booked.end && slotEnd > booked.start);
@@ -160,15 +161,6 @@ export function calculateAvailableSlots(
   }
 
   return availableSlots;
-}
-
-export async function getAppointmentsAvailable(
-  barberId: string,
-  day: string,
-  durationMinutes: number
-): Promise<string[]> {
-  const appointments = await getBookedAppointments(barberId, day);
-  return calculateAvailableSlots(appointments, day, durationMinutes);
 }
 
 export async function getServices() {

@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { env } from "../config/env";
@@ -156,35 +157,49 @@ function encodeMimeBody(value: string): string {
   return Buffer.from(value, "utf8").toString("base64").match(/.{1,76}/g)?.join("\r\n") ?? "";
 }
 
-function createRawEmail(to: string, subject: string, text: string, html: string): string {
-  const boundary = `eldorado-${randomUUID()}`;
+function createRawEmail(to: string, subject: string, text: string, html: string, logo: Buffer): string {
+  const relatedBoundary = `eldorado-related-${randomUUID()}`;
+  const alternativeBoundary = `eldorado-alternative-${randomUUID()}`;
   const message = [
     `From: ElDorado Barbershop <${env.gmailUser}>`,
     `To: ${to}`,
     `Reply-To: ${env.contactToEmail}`,
     `Subject: ${encodeMimeHeader(subject)}`,
     "MIME-Version: 1.0",
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    `Content-Type: multipart/related; boundary="${relatedBoundary}"`,
     "",
-    `--${boundary}`,
+    `--${relatedBoundary}`,
+    `Content-Type: multipart/alternative; boundary="${alternativeBoundary}"`,
+    "",
+    `--${alternativeBoundary}`,
     'Content-Type: text/plain; charset="UTF-8"',
     "Content-Transfer-Encoding: base64",
     "",
     encodeMimeBody(text),
-    `--${boundary}`,
+    `--${alternativeBoundary}`,
     'Content-Type: text/html; charset="UTF-8"',
     "Content-Transfer-Encoding: base64",
     "",
     encodeMimeBody(html),
-    `--${boundary}--`,
+    `--${alternativeBoundary}--`,
+    "",
+    `--${relatedBoundary}`,
+    'Content-Type: image/png; name="eldorado-logo.png"',
+    "Content-Transfer-Encoding: base64",
+    "Content-ID: <eldorado-logo>",
+    'Content-Disposition: inline; filename="eldorado-logo.png"',
+    "",
+    logo.toString("base64").match(/.{1,76}/g)?.join("\r\n") ?? "",
+    `--${relatedBoundary}--`,
     "",
   ].join("\r\n");
 
   return Buffer.from(message, "utf8").toString("base64url");
 }
 
-async function sendWithGmailApi(to: string, subject: string, text: string, html: string): Promise<void> {
+async function sendWithGmailApi(to: string, subject: string, text: string, html: string, logo: Buffer): Promise<void> {
   const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+    signal: AbortSignal.timeout(8_000),
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -200,12 +215,13 @@ async function sendWithGmailApi(to: string, subject: string, text: string, html:
   }
 
   const sendResponse = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+    signal: AbortSignal.timeout(8_000),
     method: "POST",
     headers: {
       Authorization: `Bearer ${tokenResult.access_token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ raw: createRawEmail(to, subject, text, html) }),
+    body: JSON.stringify({ raw: createRawEmail(to, subject, text, html, logo) }),
   });
   if (!sendResponse.ok) {
     const result = await sendResponse.json().catch(() => ({})) as { error?: { message?: string } };
@@ -236,21 +252,26 @@ export async function sendBookingConfirmation(
     "Até breve,",
     "ElDorado Barbershop",
   ].join("\n");
-  const remoteLogo = new URL("/img/logo-email.png", `${env.appOrigin}/`).href;
-  const html = bookingConfirmationHtml(booking, details, date, time, remoteLogo);
+  const logoPath = path.join(getPublicPath(), "img", "logo-email.png");
+  const html = bookingConfirmationHtml(booking, details, date, time, "cid:eldorado-logo");
 
   if (env.gmailApiConfigured) {
+    const logo = await readFile(logoPath);
     await sendWithGmailApi(
       booking.customer_email,
       subject,
       text,
-      html
+      html,
+      logo
     );
     return;
   }
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
+    connectionTimeout: 8_000,
+    greetingTimeout: 8_000,
+    socketTimeout: 10_000,
     auth: { user: env.gmailUser, pass: env.gmailAppPassword },
   });
 
@@ -260,10 +281,10 @@ export async function sendBookingConfirmation(
     replyTo: env.contactToEmail,
     subject,
     text,
-    html: bookingConfirmationHtml(booking, details, date, time, "cid:eldorado-logo"),
+    html,
     attachments: [{
       filename: "eldorado-logo.png",
-      path: path.join(getPublicPath(), "img", "logo-email.png"),
+      path: logoPath,
       cid: "eldorado-logo",
       contentType: "image/png",
       contentDisposition: "inline",

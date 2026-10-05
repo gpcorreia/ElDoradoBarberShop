@@ -28,7 +28,9 @@ function positiveInteger(name: string, fallback: number): number {
 
 function validOrigin(value: string): string {
   try {
-    return new URL(value).origin;
+    const url = new URL(value);
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) throw new Error("Invalid origin");
+    return url.origin;
   } catch {
     throw new Error("APP_ORIGIN deve ser uma origem válida, por exemplo http://localhost:1000.");
   }

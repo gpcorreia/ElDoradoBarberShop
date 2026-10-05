@@ -38,7 +38,7 @@ export async function loginAdmin(req: Request, res: Response) {
 }
 
 export function getAdminSession(_req: Request, res: Response) {
-  return res.status(200).json({ authenticated: true });
+  return res.status(200).json({ authenticated: true, admin: { email: env.adminEmail } });
 }
 
 export function logoutAdmin(_req: Request, res: Response) {

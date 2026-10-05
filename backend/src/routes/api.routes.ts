@@ -1,10 +1,10 @@
 import { Router } from "express";
 import multer from "multer";
 import { rateLimit } from "express-rate-limit";
-import {handleBooking, handleGetBarbers, handleGetServices, searchAppointmentsAvailable} from "../controllers/bookingController";
+import { handleAdminBooking, handleBooking, handleGetBarbers, handleGetServices, searchAdminAppointmentsAvailable, searchAppointmentsAvailable } from "../controllers/bookingController";
 import { handleBarberCreation } from "../controllers/barbersControllers";
 import { getAdminSession, loginAdmin, logoutAdmin } from "../controllers/authController";
-import { handleCancelBooking, handleGetAdminBookings, handleGetBarberBookings, handleGetDashboardOverview } from "../controllers/adminBookingsController";
+import { handleCancelBooking, handleGetAdminBookings, handleGetBarberBookings, handleGetDashboardOverview, handleGetInvoicingOverview } from "../controllers/adminBookingsController";
 import { handleCreateProduct, handleDeactivateProduct, handleGetProducts } from "../controllers/productsController";
 import { protectAdmin } from "../middleware/auth.middleware";
 import { requireSameOrigin } from "../middleware/security.middleware";
@@ -24,7 +24,7 @@ const upload = multer({
     const acceptedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
     const accepted = acceptedTypes.has(file.mimetype);
     if (accepted) callback(null, true);
-    else callback(new Error("Formato de imagem inválido."));
+    else callback(Object.assign(new Error("Formato de imagem inválido."), { status: 400 }));
   },
 });
 
@@ -53,8 +53,12 @@ const bookingLimiter = rateLimit({
   message: { message: "Foram efetuadas demasiadas tentativas de marcação. Aguarda alguns minutos." },
 });
 
-router.use(apiLimiter);
+router.use("/admin", (_req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
 router.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
+router.use(apiLimiter);
 
 router.post("/booking", requireSameOrigin, bookingLimiter, handleBooking);
 
@@ -68,8 +72,10 @@ router.post("/admin/login", requireSameOrigin, loginLimiter, loginAdmin);
 router.get("/admin/session", protectAdmin, getAdminSession);
 router.post("/admin/logout", protectAdmin, requireSameOrigin, logoutAdmin);
 router.get("/admin/dashboard", protectAdmin, handleGetDashboardOverview);
+router.get("/admin/invoicing", protectAdmin, handleGetInvoicingOverview);
 router.get("/admin/bookings", protectAdmin, handleGetAdminBookings);
-router.post("/admin/booking", protectAdmin, requireSameOrigin, handleBooking);
+router.get("/admin/appointments/:barber_id/:day", protectAdmin, searchAdminAppointmentsAvailable);
+router.post("/admin/booking", protectAdmin, requireSameOrigin, handleAdminBooking);
 router.post("/admin/barbers", protectAdmin, requireSameOrigin, upload.single("image"), handleBarberCreation);
 router.get("/admin/barbers/:barberId/bookings", protectAdmin, handleGetBarberBookings);
 router.patch("/admin/bookings/:bookingId/cancel", protectAdmin, requireSameOrigin, handleCancelBooking);

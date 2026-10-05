@@ -11,7 +11,10 @@ function readCookie(req: Request, name: string): string | null {
   const cookies = req.headers.cookie?.split(";") ?? [];
   for (const cookie of cookies) {
     const [key, ...value] = cookie.trim().split("=");
-    if (key === name) return decodeURIComponent(value.join("="));
+    if (key === name) {
+      try { return decodeURIComponent(value.join("=")); }
+      catch { return null; }
+    }
   }
   return null;
 }
@@ -27,7 +30,7 @@ function verifyAdminToken(req: AdminRequest): { email: string; role: "admin" } |
       audience: env.jwtAudience,
     }) as jwt.JwtPayload & { email?: string; role?: string };
 
-    if (payload.role !== "admin" || !payload.email || payload.sub !== "admin") return null;
+    if (payload.role !== "admin" || payload.email !== env.adminEmail || payload.sub !== "admin") return null;
     return { email: payload.email, role: "admin" };
   } catch {
     return null;

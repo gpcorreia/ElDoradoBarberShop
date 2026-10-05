@@ -110,7 +110,7 @@ export function renderBookingCalendar(container, { barbers, bookings, day }) {
         </div>
         ${barbers.map((barber, index) => {
           const barberBookings = bookings.filter((booking) => booking.barber_id === barber.id);
-          return `<div class="schedule-column" role="group" aria-label="Agenda de ${escapeHtml(barber.name)}">
+          return `<div class="schedule-column" role="group" data-create-booking-barber="${escapeHtml(barber.id)}" aria-label="Agenda de ${escapeHtml(barber.name)}. Toca num espaço vazio para criar uma reserva.">
             ${barberBookings.map((booking) => bookingCard(booking, index % 4)).join("")}
           </div>`;
         }).join("")}
@@ -130,4 +130,14 @@ export function renderBookingCalendar(container, { barbers, bookings, day }) {
     element.style.top = `${Number(element.dataset.bookingTop)}%`;
     element.style.height = `${Number(element.dataset.bookingHeight)}%`;
   });
+}
+
+export function scheduleTimeFromPoint(column, clientY) {
+  const bounds = column.getBoundingClientRect();
+  const ratio = Math.max(0, Math.min(0.9999, (clientY - bounds.top) / bounds.height));
+  const rawMinutes = START_MINUTES + ratio * TOTAL_MINUTES;
+  const snappedMinutes = Math.floor(rawMinutes / 10) * 10;
+  const hours = Math.floor(snappedMinutes / 60);
+  const minutes = snappedMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
