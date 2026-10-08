@@ -20,7 +20,9 @@ let barbers = [];
 let services = [];
 let currentBookings = [];
 let reservations = [];
+let reservationRequest = 0;
 let preferredManualTime = "";
+let editingBooking = null;
 let visibleDay = new Date();
 visibleDay.setHours(0, 0, 0, 0);
 
@@ -289,17 +291,26 @@ function renderReservations() {
 }
 
 async function loadReservations() {
+  const requestId = ++reservationRequest;
+  const selectedDay = reservationDate.value;
+  reservations = [];
+  document.querySelector("#reservations-count").textContent = "A carregar…";
+  document.querySelector("#reservations-period-title").textContent = selectedDay ? "Marcações do dia" : "Próximas marcações";
+  document.querySelector("#reservations-period-note").textContent = selectedDay ? new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "long", year: "numeric" }).format(localDateFromIso(selectedDay)) : "Próximos 60 dias";
   reservationsList.innerHTML = '<p class="empty-state reservations-empty">A carregar reservas…</p>';
-  const start = new Date();
+  const start = selectedDay ? localDateFromIso(selectedDay) : new Date();
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
-  end.setDate(end.getDate() + 61);
+  end.setDate(end.getDate() + (selectedDay ? 1 : 61));
   try {
     const query = new URLSearchParams({ start: toLocalTimestamp(start), end: toLocalTimestamp(end) });
     const result = await api(`/api/admin/bookings?${query}`);
+    if (requestId !== reservationRequest) return;
     reservations = result.bookings ?? [];
     renderReservations();
   } catch (error) {
+    if (requestId !== reservationRequest) return;
+    document.querySelector("#reservations-count").textContent = "0 reservas";
     reservationsList.innerHTML = `<p class="empty-state reservations-empty">${escapeHtml(error.message)}</p>`;
   }
 }
@@ -338,6 +349,7 @@ async function loadBookings() {
 }
 
 function openBookingDetails(booking) {
+  editingBooking = booking;
   const canCancel = booking.status === "confirmed" && String(booking.starts_at) > toLocalTimestamp(new Date());
   bookingDetail.innerHTML = `
     <article class="booking-dialog-content">
@@ -351,6 +363,17 @@ function openBookingDetails(booking) {
         <div><dt>Telefone</dt><dd>${escapeHtml(booking.customer_phone || "—")}</dd></div>
         <div><dt>Email</dt><dd>${escapeHtml(booking.customer_email || "—")}</dd></div>
       </dl>
+      ${["confirmed", "completed"].includes(booking.status) ? `<form id="edit-booking-form" class="manual-booking-form">
+        <h3>Alterar reserva</h3>
+        <label class="field-label"><span>SERVIÇO</span><select name="service_id" class="admin-field" required>${services.map(service => `<option value="${escapeHtml(service.id)}" ${service.id === booking.service_id ? "selected" : ""}>${escapeHtml(service.name)} · ${escapeHtml(formatPrice(service.price))}</option>`).join("")}</select></label>
+        <div class="manual-form-grid">
+          <label class="field-label"><span>DATA</span><input name="day" type="date" class="admin-field" value="${escapeHtml(String(booking.starts_at).slice(0, 10))}" required /></label>
+          <label class="field-label"><span>HORA</span><input name="time" type="time" step="600" class="admin-field" value="${escapeHtml(String(booking.starts_at).slice(11, 16))}" required /></label>
+        </div>
+        <p class="dialog-intro">O valor da faturação acompanha o serviço escolhido. O horário será validado ao guardar.</p>
+        <p data-edit-error role="alert"></p>
+        <button class="primary-button" type="submit">GUARDAR ALTERAÇÕES</button>
+      </form>` : ""}
       ${canCancel ? `<button type="button" data-cancel-booking="${escapeHtml(booking.id)}" class="danger-button booking-cancel">CANCELAR RESERVA</button>` : ""}
     </article>`;
   bookingDialog.showModal();
@@ -493,12 +516,12 @@ bookingsList.addEventListener("click", (event) => {
 
 reservationSearch.addEventListener("input", renderReservations);
 reservationBarber.addEventListener("change", renderReservations);
-reservationDate.addEventListener("change", renderReservations);
+reservationDate.addEventListener("change", loadReservations);
 document.querySelector("#clear-reservation-filters").addEventListener("click", () => {
   reservationSearch.value = "";
   reservationBarber.value = "";
   reservationDate.value = "";
-  renderReservations();
+  loadReservations();
 });
 reservationsList.addEventListener("click", (event) => {
   const viewButton = event.target.closest("[data-view-reservation]");
@@ -633,3 +656,27 @@ api("/api/admin/session")
     if (document.querySelector("[data-tab].is-active")?.dataset.tab === "reservations") await loadReservations();
   })
   .catch((error) => showMessage("Erro", error.message, true));
+
+bookingDetail.addEventListener("submit", async (event) => {
+  if (event.target.id !== "edit-booking-form") return;
+  event.preventDefault();
+  const form = event.target;
+  const booking = editingBooking;
+  const button = form.querySelector("button[type='submit']");
+  const errorBox = form.querySelector("[data-edit-error]");
+  button.disabled = true;
+  errorBox.textContent = "";
+  try {
+    const result = await api('/api/admin/bookings/' + encodeURIComponent(booking.id), {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ service_id: form.elements.service_id.value,
+        starts_at: form.elements.day.value + 'T' + form.elements.time.value + ':00',
+        expected_starts_at: String(booking.starts_at).slice(0, 19), expected_service_id: booking.service_id }),
+    });
+    visibleDay = localDateFromIso(form.elements.day.value);
+    bookingDialog.close();
+    showMessage("Reserva atualizada", result.message);
+    await Promise.all([loadBookings(), loadReservations(), loadDashboard(), loadInvoicing()]);
+  } catch (error) { errorBox.textContent = error.message; }
+  finally { button.disabled = false; }
+});

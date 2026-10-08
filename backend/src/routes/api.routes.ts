@@ -4,7 +4,7 @@ import { rateLimit } from "express-rate-limit";
 import { handleAdminBooking, handleBooking, handleGetBarbers, handleGetServices, searchAdminAppointmentsAvailable, searchAppointmentsAvailable } from "../controllers/bookingController";
 import { handleBarberCreation } from "../controllers/barbersControllers";
 import { getAdminSession, loginAdmin, logoutAdmin } from "../controllers/authController";
-import { handleCancelBooking, handleGetAdminBookings, handleGetBarberBookings, handleGetDashboardOverview, handleGetInvoicingOverview } from "../controllers/adminBookingsController";
+import { handleUpdateBooking, handleCancelBooking, handleGetAdminBookings, handleGetBarberBookings, handleGetDashboardOverview, handleGetInvoicingOverview } from "../controllers/adminBookingsController";
 import { handleCreateProduct, handleDeactivateProduct, handleGetProducts } from "../controllers/productsController";
 import { protectAdmin } from "../middleware/auth.middleware";
 import { requireSameOrigin } from "../middleware/security.middleware";
@@ -78,6 +78,7 @@ router.get("/admin/appointments/:barber_id/:day", protectAdmin, searchAdminAppoi
 router.post("/admin/booking", protectAdmin, requireSameOrigin, handleAdminBooking);
 router.post("/admin/barbers", protectAdmin, requireSameOrigin, upload.single("image"), handleBarberCreation);
 router.get("/admin/barbers/:barberId/bookings", protectAdmin, handleGetBarberBookings);
+router.patch("/admin/bookings/:bookingId", protectAdmin, requireSameOrigin, handleUpdateBooking);
 router.patch("/admin/bookings/:bookingId/cancel", protectAdmin, requireSameOrigin, handleCancelBooking);
 router.post("/admin/products", protectAdmin, requireSameOrigin, upload.single("image"), handleCreateProduct);
 router.delete("/admin/products/:productId", protectAdmin, requireSameOrigin, handleDeactivateProduct);

@@ -3,7 +3,7 @@ const { test } = require("node:test");
 
 // Isolated configuration: never access production data or send notifications.
 Object.assign(process.env, {
-  NODE_ENV: "test", SUPABASE_URL: "https://example.supabase.co", SUPABASE_KEY: "test",
+  ADMIN_SESSION_MAX_AGE_MS: "31536000000", NODE_ENV: "test", SUPABASE_URL: "https://example.supabase.co", SUPABASE_KEY: "test",
   ADMIN_EMAIL: "admin@example.com", ADMIN_PASSWORD_HASH: require("bcrypt").hashSync("test-password", 4),
   JWT_SECRET_KEY: "isolated-test-secret-with-at-least-32-characters",
   APP_ORIGIN: "https://example.com", SERVE_PAGES: "true",
@@ -29,6 +29,28 @@ test("production safeguards", async (t) => {
       assert.equal(response.headers.get("cache-control"), "no-store");
     }
     assert.equal((await request("/admin.html")).status, 303);
+  });
+  await t.test("persistent admin login survives token age, renews cookie and logout clears it", async () => {
+    const response = await request("/api/admin/login", { method: "POST", headers: { Origin: process.env.APP_ORIGIN, "Content-Type": "application/json" }, body: JSON.stringify({ email: process.env.ADMIN_EMAIL, password: "test-password" }) });
+    assert.equal(response.status, 200);
+    const cookieHeader = response.headers.get("set-cookie");
+    assert.match(cookieHeader, /HttpOnly/);
+    assert.match(cookieHeader, /SameSite=Strict/);
+    assert.match(cookieHeader, /Max-Age=31536000/);
+    const cookie = cookieHeader.split(";")[0];
+    const jwt = require("jsonwebtoken");
+    const token = decodeURIComponent(cookie.slice(cookie.indexOf("=") + 1));
+    const payload = jwt.decode(token);
+    assert.equal(payload.exp, undefined);
+    const { env } = require("../dist/src/config/env");
+    const oldToken = jwt.sign({ email: env.adminEmail, role: "admin", iat: Math.floor(Date.now() / 1000) - 90 * 86400 }, env.jwtSecret, { subject: "admin", issuer: env.jwtIssuer, audience: env.jwtAudience });
+    const session = await request("/api/admin/session", { headers: { Cookie: "eldorado_session=" + oldToken } });
+    assert.equal(session.status, 200);
+    assert.match(session.headers.get("set-cookie"), /Max-Age=31536000/);
+    const logout = await request("/api/admin/logout", { method: "POST", headers: { Cookie: cookie, Origin: env.appOrigin } });
+    assert.equal(logout.status, 200);
+    assert.match(logout.headers.get("set-cookie"), /eldorado_session=;/);
+    assert.equal((await request("/api/admin/session")).status, 401);
   });
   await t.test("cross-origin writes and malformed JSON are rejected", async () => {
     assert.equal((await request("/api/booking", { method: "POST", headers: { Origin: "https://attacker.example" } })).status, 403);

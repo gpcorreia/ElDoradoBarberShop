@@ -29,7 +29,6 @@ export async function loginAdmin(req: Request, res: Response) {
     algorithm: "HS256",
     issuer: env.jwtIssuer,
     audience: env.jwtAudience,
-    expiresIn: Math.floor(env.adminSessionMaxAgeMs / 1000),
   });
 
   res.cookie(ADMIN_COOKIE_NAME, token, cookieOptions);
