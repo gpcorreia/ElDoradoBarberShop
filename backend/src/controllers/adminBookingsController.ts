@@ -1,3 +1,4 @@
+import { updateBooking } from "../repositories/bookingRepository";
 import { Request, Response } from "express";
 import { cancelBooking, getAdminBookings, getBarberBookings, getDashboardOverview, getInvoicingOverview } from "../repositories/adminBookings";
 import { isLocalTimestamp, isUuid, lisbonLocalTimestamp } from "../config/validation";
@@ -112,5 +113,24 @@ export async function handleGetInvoicingOverview(_req: Request, res: Response) {
   } catch (error) {
     console.error("Erro ao carregar a faturação:", error);
     return res.status(500).json({ message: "Não foi possível carregar os dados de faturação." });
+  }
+}
+
+export async function handleUpdateBooking(req: Request, res: Response) {
+  const { service_id, starts_at, expected_starts_at, expected_service_id } = req.body ?? {};
+  if (!isUuid(req.params.bookingId) || !isUuid(service_id) || !isUuid(expected_service_id)
+    || !isLocalTimestamp(starts_at) || !isLocalTimestamp(expected_starts_at)
+    || new Date(starts_at.slice(0, 10) + "T12:00:00Z").getUTCDay() === 0) {
+    return res.status(400).json({ message: "Serviço ou horário inválidos." });
+  }
+  try {
+    const result = await updateBooking(req.params.bookingId, service_id, starts_at, expected_starts_at, expected_service_id);
+    if (result.outcome === "invalid") return res.status(400).json({ message: "O serviço não cabe no horário de funcionamento." });
+    if (result.outcome === "conflict") return res.status(409).json({ message: "O novo horário sobrepõe-se a outra reserva. Escolhe outro horário." });
+    if (result.outcome === "stale") return res.status(409).json({ message: "A reserva foi alterada ou já não pode ser editada. Fecha os detalhes e atualiza a lista." });
+    return res.json({ message: "Reserva atualizada com sucesso.", booking: result.booking });
+  } catch (error) {
+    console.error("Erro ao atualizar reserva:", error);
+    return res.status(500).json({ message: "Não foi possível atualizar a reserva." });
   }
 }

@@ -33,7 +33,7 @@ function revenue(bookings: DashboardBooking[]): number {
 export async function getBarberBookings(barberId: string, start: string, end: string) {
   return readAllRows((from, to) => supabase
     .from("bookings")
-    .select("id, barber_id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, services(name)")
+    .select("id, service_id, barber_id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, services(name)")
     .eq("barber_id", barberId)
     .neq("status", "cancelled")
     .gte("starts_at", start)
@@ -44,7 +44,7 @@ export async function getBarberBookings(barberId: string, start: string, end: st
 export async function getAdminBookings(start: string, end: string) {
   return readAllRows((from, to) => supabase
     .from("bookings")
-    .select("id, barber_id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, services(name, price), barbers(id, name)")
+    .select("id, service_id, barber_id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, services(name, price), barbers(id, name)")
     .neq("status", "cancelled")
     .gte("starts_at", start)
     .lt("starts_at", end)
@@ -71,7 +71,7 @@ export async function getDashboardOverview({ todayStart, todayEnd, workingMinute
   const [bookingsResult, barbersResult] = await Promise.all([
     supabase
       .from("bookings")
-      .select("id, barber_id, customer_name, starts_at, ends_at, status, services(name, price), barbers(id, name)")
+      .select("id, service_id, barber_id, customer_name, starts_at, ends_at, status, services(name, price), barbers(id, name)")
       .gte("starts_at", todayStart)
       .lt("starts_at", todayEnd)
       .order("starts_at"),

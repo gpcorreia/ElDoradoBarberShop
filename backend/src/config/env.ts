@@ -39,7 +39,7 @@ function validOrigin(value: string): string {
 const jwtSecret = process.env.JWT_SECRET_KEY!.trim();
 const adminEmail = process.env.ADMIN_EMAIL!.trim().toLowerCase();
 const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH!.trim();
-const adminSessionMaxAgeMs = positiveInteger("ADMIN_SESSION_MAX_AGE_MS", 8 * 60 * 60 * 1000);
+const adminSessionMaxAgeMs = positiveInteger("ADMIN_SESSION_MAX_AGE_MS", 365 * 24 * 60 * 60 * 1000);
 const port = positiveInteger("PORT", 1000);
 
 if (port > 65535) throw new Error("PORT deve estar entre 1 e 65535.");

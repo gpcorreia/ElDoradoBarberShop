@@ -182,3 +182,20 @@ export async function getServices() {
 
   return services;
 }
+
+export async function updateBooking(bookingId: string, serviceId: string, startsAt: string, expectedStart: string, expectedService: string) {
+  const duration = await getServiceDuration(serviceId);
+  const startMinutes = timeToMinutes(getTimeFromTimestamp(startsAt));
+  if (!duration || startMinutes % SLOT_INTERVAL_MINUTES !== 0 || !fitsWorkingPeriod(startMinutes, duration)) return { outcome: "invalid" };
+  const endsAt = calculateEndTime(startsAt, duration);
+  if (!endsAt) return { outcome: "invalid" };
+  const { data, error } = await supabase.from("bookings")
+    .update({ service_id: serviceId, starts_at: startsAt, ends_at: endsAt })
+    .eq("id", bookingId).eq("starts_at", expectedStart).eq("service_id", expectedService)
+    .in("status", ["confirmed", "completed"])
+    .select("id, service_id, barber_id, starts_at, ends_at, status").maybeSingle();
+  if (error?.code === "23P01") return { outcome: "conflict" };
+  if (["23503", "23514", "22P02"].includes(error?.code ?? "")) return { outcome: "invalid" };
+  if (error) throw error;
+  return data ? { outcome: "updated", booking: data } : { outcome: "stale" };
+}
