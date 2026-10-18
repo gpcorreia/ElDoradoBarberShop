@@ -79,6 +79,30 @@ test("production safeguards", async (t) => {
     const rows = await readAllRows(async (from, to) => ({ data: source.slice(from, to + 1), error: null }));
     assert.deepEqual(rows, source);
   });
+  await t.test("invoicing stops at the current Lisbon datetime", async () => {
+    const validation = require("../dist/src/config/validation");
+    const adminBookings = require("../dist/src/repositories/adminBookings");
+    const { handleGetInvoicingOverview } = require("../dist/src/controllers/adminBookingsController");
+    const originalTimestamp = validation.lisbonLocalTimestamp;
+    const originalOverview = adminBookings.getInvoicingOverview;
+    const now = "2026-10-18T14:30:00";
+    let range;
+    validation.lisbonLocalTimestamp = () => now;
+    adminBookings.getInvoicingOverview = async (options) => { range = options; return {}; };
+    try {
+      const response = { status(code) { assert.equal(code, 200); return this; }, json() {} };
+      await handleGetInvoicingOverview({}, response);
+      assert.deepEqual(range, {
+        historyStart: "2025-11-01T00:00:00",
+        rangeEnd: now,
+        currentMonth: "2026-10",
+        previousMonth: "2026-09",
+      });
+    } finally {
+      validation.lisbonLocalTimestamp = originalTimestamp;
+      adminBookings.getInvoicingOverview = originalOverview;
+    }
+  });
   await t.test("past manual booking saves without notification lookups", async () => {
     const oldCreate = repository.createBooking;
     repository.createBooking = async () => "created";
