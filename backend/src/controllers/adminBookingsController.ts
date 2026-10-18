@@ -10,12 +10,6 @@ function addUtcDays(localTimestamp: string, days: number): string {
   return date.toISOString().slice(0, 19);
 }
 
-function nextMonthStart(monthStart: string): string {
-  const date = new Date(`${monthStart}Z`);
-  date.setUTCMonth(date.getUTCMonth() + 1);
-  return date.toISOString().slice(0, 19);
-}
-
 function minutes(time: string): number {
   const [hours, mins] = time.split(":").map(Number);
   return hours * 60 + mins;
@@ -95,7 +89,8 @@ export async function handleGetDashboardOverview(_req: Request, res: Response) {
 }
 
 export async function handleGetInvoicingOverview(_req: Request, res: Response) {
-  const currentMonth = lisbonLocalTimestamp().slice(0, 7);
+  const now = lisbonLocalTimestamp();
+  const currentMonth = now.slice(0, 7);
   const currentStart = `${currentMonth}-01T00:00:00`;
   const previousDate = new Date(`${currentStart}Z`);
   previousDate.setUTCMonth(previousDate.getUTCMonth() - 1);
@@ -105,7 +100,7 @@ export async function handleGetInvoicingOverview(_req: Request, res: Response) {
   try {
     const invoicing = await getInvoicingOverview({
       historyStart: historyDate.toISOString().slice(0, 19),
-      rangeEnd: nextMonthStart(currentStart),
+      rangeEnd: now,
       currentMonth,
       previousMonth: previousDate.toISOString().slice(0, 7),
     });
