@@ -1,7 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const publicDir = path.resolve(__dirname, "../../public");
+const publicDir = path.resolve(__dirname, "../public");
 const routeFile = path.resolve(__dirname, "../src/routes/page.routes.ts");
 const failures = [];
 

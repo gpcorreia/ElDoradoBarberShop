@@ -4,9 +4,8 @@ import path from "path";
 export const getPublicPath = (): string => {
   const candidates = Array.from(
     new Set([
-      path.resolve(__dirname, "../../../public"),
-      path.resolve(process.cwd(), "public"),
-      path.resolve(process.cwd(), "../public"),
+      path.resolve(__dirname, "../../public"), // Source: backend/src/config
+      path.resolve(__dirname, "../../../public"), // Compiled: backend/dist/src/config
     ])
   );
 
