@@ -14,6 +14,18 @@ npm start
 
 O servidor fica disponível em `http://localhost:1000`.
 
+## Deploy com contexto limitado a `backend`
+
+A pasta `backend` contém toda a aplicação, incluindo os ficheiros estáticos em `backend/public`. Não é necessário copiar ficheiros de fora desta pasta.
+
+- Diretório de trabalho/contexto de build: `backend`.
+- Instalação: `npm ci --include=dev` (Tailwind e TypeScript são necessários no build).
+- Build: `npm run build`.
+- Arranque: `npm start`.
+- Incluir `public`, `dist`, `package.json` e as dependências de produção no artefacto final; publicar apenas `dist` não é suficiente.
+- Configurar as variáveis abaixo no novo alojamento, incluindo `NODE_ENV=production`, `APP_ORIGIN` e `PORT` com a porta configurada para o serviço.
+- Manter `SERVE_PAGES=true` (ou omitir a variável) para servir o site e a API juntos. O endpoint de saúde é `/api/health`.
+
 ## Configuração obrigatória
 
 - `SUPABASE_URL`: URL do projeto Supabase.
@@ -104,7 +116,7 @@ Antes da entrega ao cliente, substituir os dados provisórios no footer e no cat
 - morada;
 - telefone;
 - email;
-- número de WhatsApp em `public/js/products.js`;
+- número de WhatsApp em `backend/public/js/products.js`;
 - ligações das redes sociais;
 - preços e horários reais;
 - identidade legal na Política de Privacidade.
